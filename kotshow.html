@@ -661,6 +661,12 @@ body {
   body.ppt-mode .legend,
   body.ppt-mode .laas-legende { display: none !important; }
   body.ppt-mode .ikke-placeret-bar { padding: 3px 0; gap: 6px; }
+  body.layout-h .edu-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    align-items: start;
+  }
   body.ppt-mode .ikke-placeret-label { font-size: 0.6rem; }
   body.ppt-mode .ikke-placeret-slots { gap: 3px; }
   body.ppt-mode .avatar-mini { width: 18px; height: 18px; font-size: 0.52rem; border-radius: 3px; }
@@ -703,6 +709,8 @@ body {
   .ppt-nav button:disabled { opacity: 0.2; cursor: not-allowed; }
   .ppt-nav-counter { color: rgba(255,255,255,0.7); font-size: 0.72rem; min-width: 60px; text-align: center; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
   .ppt-exit-btn { background: rgba(239,68,68,0.3) !important; border-radius: 6px !important; width: auto !important; height: auto !important; padding: 6px 12px !important; font-size: 0.78rem !important; }
+  .ppt-layout-btn { font-size:1.1rem !important; }
+  body.layout-h .ppt-layout-btn { background:rgba(124,58,237,0.55) !important; }
   .ppt-exit-btn:hover { background: rgba(239,68,68,0.85) !important; }
 
   /* PPT-knap i nav */
@@ -916,6 +924,7 @@ const MOTIVATION = {
   <button id="pptPrevBtn" onclick="navigate(-1)">←</button>
   <div class="ppt-nav-counter" id="pptCounter"></div>
   <button id="pptNextBtn" onclick="navigate(1)">→</button>
+  <button onclick="toggleLayout()" class="ppt-layout-btn" id="pptLayoutBtn" title="Skift layout">⊞</button>
   <button onclick="exitPPT()" class="ppt-exit-btn">✕ Afslut</button>
 </div>
 <nav class="nav">
@@ -1860,6 +1869,11 @@ let SLIDES = [];
 
 // ── PRÆSENTATIONSTILSTAND ─────────────────────────────────
 let pptMode = false;
+
+function toggleLayout() {
+  document.body.classList.toggle('layout-h');
+  if (pptMode) setTimeout(scalePPT, 50);
+}
 
 function enterPPT() {
   pptMode = true;
