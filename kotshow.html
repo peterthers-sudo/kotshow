@@ -1653,11 +1653,15 @@ function buildSlide(s) {
       if (!s.slideType || s.slideType === 'tom') {
         ekstraHTML = '';
       } else if (!harLedigeP && alleLaaste) {
-        const lukketKøVal = s.slideType === 'result' ? (ud.koePerGrp?.[grp.nr] ?? 0) : 0;
-        const lukketTxt = lukketKøVal > 0 ? 'ALLE OPTAGET (KØ)' : 'ALLE OPTAGET';
-        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:600;color:#64748b;">${lukketTxt}</span>`;
+        if (s.slideType === 'result') {
+          const lukketKøVal = ud.koePerGrp?.[grp.nr] ?? 0;
+          const lukketTxt = lukketKøVal > 0 ? 'ALLE OPTAGET (KØ)' : 'ALLE OPTAGET';
+          ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:600;color:#64748b;">${lukketTxt}</span>`;
+        } else {
+          ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:700;color:#dc2626;">Lukket</span>`;
+        }
       } else if (s.slideType === 'midlertidig') {
-        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:600;color:#64748b;">ANSØGNINGER IALT: ${aktivEntries.length}</span>`;
+        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">Ansøgninger ialt: ${aktivEntries.length}</span>`;
       } else if (s.slideType === 'result') {
         const koeVal = ud.koePerGrp?.[grp.nr] ?? 0;
         let koeTxt = '';
@@ -1674,8 +1678,8 @@ function buildSlide(s) {
           ekstraHTML = '';
         } else {
           const realKø = ud.køMap?.[grp.nr] ?? køCount;
-          const koeTxt = realKø > 0 ? `ANSØGERE I KØ: ${realKø}` : 'INGEN KØ';
-          ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:600;color:#64748b;">${koeTxt}</span>`;
+          const koeTxt = realKø > 0 ? `Ansøgere i kø: ${realKø}` : 'Ingen kø';
+          ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">${koeTxt}</span>`;
         }
       }
 
