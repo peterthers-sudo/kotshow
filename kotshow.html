@@ -1601,10 +1601,12 @@ function buildSlide(s) {
     const grpRows = udata.grupper.filter(grp => (ud.kap?.[grp.nr] ?? grp.kap) > 0).map((grp,idx)=>{
       const kv      = ud.kap?.[grp.nr] ?? grp.kap;
       const entries = ud.slots?.[grp.nr] || [];
+      // effectiveKv: stort datasæt → kun top-kv dublets vises; lille → alle dublets
+      const effectiveKv = ANSØGERE.length > 26 ? kv : entries.length;
       const slotsHTML = (ANSØGERE.length > 26 && s.slideType === 'midlertidig')
         ? midlertidigSlotHTML(entries, kv, grp.nr, ud.udbudId, vilRykkeIds)
-        : (ANSØGERE.length > 26 && s.slideType === 'clearing')
-        ? clearingSlotHTML(entries, kv, grp.nr, ud.udbudId)
+        : s.slideType === 'clearing'
+        ? clearingSlotHTML(entries, effectiveKv, grp.nr, ud.udbudId)
         : s.slideType === 'midlertidig'
         ? sortSlotEntries(entries, grp.nr).map(e=>avatarHTML(e,grp.nr,ud.udbudId,{vilRykkeIds})).join('')
         : sortSlotEntries(entries, grp.nr).map(e=>avatarHTML(e,grp.nr,ud.udbudId)).join('');
