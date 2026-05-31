@@ -1648,7 +1648,7 @@ function buildSlide(s) {
       <div class="edu-sections">${sections}</div>
       ${rejectedHTML}
       ${legendeHTML(s.legende)}
-      ${ikkeBar}
+      ${s.slideType==='clearing' ? ikkeBar : ''}
       ${s.note?`<div class="slide-note">${s.note}</div>`:''}
     </div>`;
 }
