@@ -1639,7 +1639,9 @@ function buildSlide(s) {
       if (!s.slideType || s.slideType === 'tom') {
         ekstraHTML = '';
       } else if (!harLedigeP && alleLaaste) {
-        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:700;color:#dc2626;">Lukket</span>`;
+        const lukketKøVal = s.slideType === 'result' ? (ud.koePerGrp?.[grp.nr] ?? 0) : 0;
+        const lukketTxt = lukketKøVal > 0 ? 'Lukket med kø' : 'Lukket';
+        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:700;color:#dc2626;">${lukketTxt}</span>`;
       } else if (s.slideType === 'midlertidig') {
         ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">Ansøgninger ialt: ${aktivEntries.length}</span>`;
       } else if (s.slideType === 'result') {
