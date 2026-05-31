@@ -815,19 +815,47 @@ function bedreEnd(a, b) {
 // ── MIDLERTIDIG: kun slots der er bedre end nuværende sikre plads ────
 // Allerede optimalt placerede ansøgere vises kun i deres nuværende slot
 // (som "uændret") og prøves ikke på lavere prioriteter.
+// Beregn hvilke pools der er permanent lukkede (ingen ledige pladser i hele poolen)
+// Pool [10,20]: pladsflyt kan flytte fra 20 til 10 og omvendt
+// Pool [60,70]: pladsflyt kan flytte fra 70 til 60 og omvendt
+function beregnLukkedePools(placed, kap) {
+  const POOLS = [[10,20],[60,70]];
+  const lukket = new Set(); // "uddId|grpNr" er lukket hvis hele poolen er fuld
+  for (const [uddId, grps] of Object.entries(kap)) {
+    for (const pool of POOLS) {
+      let totalKap = 0, totalPlaceret = 0;
+      for (const grpNr of pool) {
+        const k = grps[grpNr] ?? 0;
+        totalKap += k;
+        totalPlaceret += Object.values(placed).filter(p=>p.udbudId===uddId&&p.gruppeNr===grpNr).length;
+      }
+      // Hele poolen er lukket: ingen ledige pladser nogen steder i poolen
+      if (totalKap > 0 && totalPlaceret >= totalKap) {
+        for (const grpNr of pool) {
+          if ((grps[grpNr] ?? 0) > 0) lukket.add(sKey(uddId, grpNr));
+        }
+      }
+    }
+  }
+  return lukket;
+}
+
 function computeMidlertidig(placed, kap) {
+  const lukkede = beregnLukkedePools(placed, kap);
+
   const t = {};
   for (const a of ANSØGERE) {
     const curr = placed[a.id]; // sikker plads fra forrige runde (eller undefined)
     for (const ansoeg of a.ansøgninger)
       for (const grp of ansoeg.grupper) {
         if ((kap[ansoeg.udbud]?.[grp] ?? 0) === 0) continue; // kap=0 = ingen standby
+        const k = sKey(ansoeg.udbud, grp);
+        const isHere = curr && curr.udbudId===ansoeg.udbud && curr.gruppeNr===grp;
+        // Spring lukkede slots over — medmindre ansøgeren SIDDER DER (vis som uændret)
+        if (lukkede.has(k) && !isHere) continue;
         const cand = {udbudId:ansoeg.udbud, gruppeNr:grp, prio:ansoeg.prio};
-        const isHere   = curr && curr.udbudId===ansoeg.udbud && curr.gruppeNr===grp;
         const isBetter = curr && bedreEnd(cand, curr);
-        // Inkluder slot kun hvis: ingen sikker plads endnu, ELLER dette ER den sikre plads, ELLER bedre end sikker plads
         if (!curr || isHere || isBetter) {
-          const k = sKey(ansoeg.udbud, grp);
           (t[k] = t[k]||[]).push(a.id);
         }
       }
@@ -925,19 +953,33 @@ function computePladsflyt(placed, kap) {
         if (empty <= 0) continue;
 
         // Overfør kun hvis ingen uplacerede søger netop fromGrp
-        const ventendeFrom = ANSØGERE.filter(a =>
-          !placed[a.id] &&
-          a.ansøgninger.some(an => an.udbud===uddId && an.grupper.includes(fromGrp))
-        ).length;
-        if (ventendeFrom > 0) continue;
+        // Check om nogen vil ind i fromGrp (hvis ja: spring over — gruppen har selv efterspørgsel)
+        const ventendeFrom = ANSØGERE.filter(a => {
+          const p = placed[a.id];
+          if (p?.udbudId===uddId && p?.gruppeNr===fromGrp) return false;
+          return a.ansøgninger.some(an => {
+            if (an.udbud!==uddId || !an.grupper.includes(fromGrp)) return false;
+            const cand = {udbudId:uddId, gruppeNr:fromGrp, prio:an.prio};
+            return !p || bedreEnd(cand, p);
+          });
+        }).length;
+        if (ventendeFrom > 0) {
+          if ([60,70].includes(fromGrp)) console.log(`Spring over grp.${fromGrp} i ${uddId}: ${ventendeFrom} vil ind der`);
+          continue;
+        }
 
         // Find en gruppe i SAMME POOL med efterspørgsel
         for (const toGrp of poolGrps) {
           if (toGrp === fromGrp) continue;
-          const vendenteTo = ANSØGERE.filter(a =>
-            !placed[a.id] &&
-            a.ansøgninger.some(an => an.udbud===uddId && an.grupper.includes(toGrp))
-          ).length;
+          const vendenteTo = ANSØGERE.filter(a => {
+            const p = placed[a.id];
+            if (p?.udbudId===uddId && p?.gruppeNr===toGrp) return false;
+            return a.ansøgninger.some(an => {
+              if (an.udbud!==uddId || !an.grupper.includes(toGrp)) return false;
+              const cand = {udbudId:uddId, gruppeNr:toGrp, prio:an.prio};
+              return !p || bedreEnd(cand, p);
+            });
+          }).length;
           if (vendenteTo === 0) continue;
 
           const count = Math.min(empty, vendenteTo);
@@ -1085,7 +1127,16 @@ function generateSlides(states) {
           køMap: Object.fromEntries(u.grupper.map(g=>{
             const k = sKey(u.id,g.nr);
             const ids = state.tentative[k]||[];
-            return [g.nr, ids.filter(id => !state.placed[id]).length];
+            // Kø = uplacerede + dem placeret andetsteds for hvem DETTE slot er bedre
+            return [g.nr, ids.filter(id => {
+              const p = state.placed[id];
+              if (!p) return true; // uplaceret → i kø
+              if (p.udbudId===u.id && p.gruppeNr===g.nr) return false; // sidder allerede her
+              // Placeret andetsteds: kun i kø hvis dette slot er bedre end nuværende
+              const ansoeg = ansInfo(id)?.ansøgninger.find(a => a.udbud===u.id && a.grupper.includes(g.nr));
+              if (!ansoeg) return false;
+              return bedreEnd({udbudId:u.id,gruppeNr:g.nr,prio:ansoeg.prio}, p);
+            }).length];
           })),
           slots: Object.fromEntries(u.grupper.map(g=>{
             const k = sKey(u.id,g.nr);
@@ -1136,7 +1187,7 @@ function generateSlides(states) {
               const kv = state.nyKap[u.id]?.[g.nr]??0;
               const placedHere = Object.entries(state.placed)
                 .filter(([id,p])=>p.udbudId===u.id&&p.gruppeNr===g.nr)
-                .map(([id])=>({id,status:'optaget',endelig:true}));
+                .map(([id])=>({id,status:'optaget'}));
               const tom = Math.max(0, kv - placedHere.length);
               const res = [...placedHere];
               if (tom>0) res.push({tom});
@@ -1222,6 +1273,23 @@ function generateSlides(states) {
   return slides;
 }
 
+// Fælles hjælpefunktion: er ansøger definitvt låst på sin nuværende plads?
+// Tjekker om alle bedre prioriteter er i lukkede pools
+function erEndeligLaast(id, uddId, grpNr) {
+  const info = ansInfo(id);
+  if (!info) return true;
+  const cs = window._closedSlots || new Set();
+  const currAnsoeg = info.ansøgninger.find(a => a.udbud===uddId && a.grupper.includes(grpNr));
+  const currPrio = currAnsoeg?.prio ?? 999;
+  return !info.ansøgninger.some(a => {
+    for (const g of a.grupper) {
+      const bedre = a.prio < currPrio || (a.prio===currPrio && g < grpNr);
+      if (bedre && !cs.has(sKey(a.udbud, g))) return true;
+    }
+    return false;
+  });
+}
+
 // ── RENDERING ─────────────────────────────────────────────────
 function avatarHTML(entry, grpNr, uddId) {
   if (entry.tom) return `<div class="tom-plads">🪑</div>`.repeat(entry.tom);
@@ -1231,7 +1299,7 @@ function avatarHTML(entry, grpNr, uddId) {
     .slice().sort((a,b)=>a.prio-b.prio)
     .map(p => {
       const u = udbudInfo(p.udbud);
-      const grp = p.grupper.length>1 ? 'K1+K2' : (p.grupper[0]===10?'K1':'K2');
+      const grp = p.grupper.join(',');
       return `${p.prio}. ${u?u.navn:p.udbud} (${grp})`;
     }).join('\n') : '';
   const tip = info ? `${info.navn}\n${prios}` : `Ansøger ${entry.id}`;
@@ -1245,10 +1313,22 @@ function avatarHTML(entry, grpNr, uddId) {
   if (info && uddId && (entry.status==='optaget' || entry.status==='uændret')) {
     let showEndelig;
     if (entry.endelig) {
-      showEndelig = true; // slutresultat: altid låst
+      showEndelig = true;
     } else {
-      const top = info.ansøgninger.slice().sort((a,b)=>a.prio-b.prio)[0];
-      showEndelig = top.udbud===uddId && top.grupper.includes(grpNr) && Math.min(...top.grupper)===grpNr;
+      // Find nuværende prioritet for denne placering
+      const currAnsoeg = info.ansøgninger.find(a => a.udbud===uddId && a.grupper.includes(grpNr));
+      const currPrio = currAnsoeg?.prio ?? 999;
+      const currGrp  = grpNr;
+      // Højere prioriteter = samme udbud lavere grp, eller lavere prio-nummer
+      const cs = window._closedSlots || new Set();
+      const hasBetterOpen = info.ansøgninger.some(a => {
+        for (const g of a.grupper) {
+          const isBetter = a.prio < currPrio || (a.prio===currPrio && g < currGrp);
+          if (isBetter && !cs.has(`${a.udbud}|${g}`)) return true;
+        }
+        return false;
+      });
+      showEndelig = !hasBetterOpen;
     }
     lock = `<span class="avatar-lock">${showEndelig ? '&#128274;' : '&#128275;'}</span>`;
   }
@@ -1297,13 +1377,13 @@ function legendeHTML(keys) {
 }
 
 function buildIntro() {
-  function grpTxt(grupper) { return grupper.length>1?grupper.join('+'):`${grupper[0]}`; }
+  function grpTxt(uddId, grupper) { return grupper.join(','); }
   const cards = ANSØGERE.map(a=>{
     const prioLines = a.ansøgninger.map(p=>{
       const u = udbudInfo(p.udbud);
       return `<div style="font-size:0.68rem;color:#475569;margin-bottom:2px;">
         <span style="color:#94a3b8;font-weight:600;">Prio ${p.prio}:</span> ${u?u.navn:p.udbud}
-        <span style="font-size:0.6rem;background:#f1f5f9;padding:1px 4px;border-radius:3px;margin-left:2px;">Kvote ${grpTxt(p.grupper)}</span>
+        <span style="font-size:0.6rem;background:#f1f5f9;padding:1px 4px;border-radius:3px;margin-left:2px;">${grpTxt(p.udbud, p.grupper)}</span>
       </div>`;
     }).join('');
     const motiv = MOTIVATION[a.id]||'';
@@ -1384,6 +1464,23 @@ function buildSlide(s) {
     const udIdx  = UDBUD.indexOf(udata);
     const col    = COLORS[udIdx % COLORS.length];
 
+    // Lukkede pools: beregn for alle slides der viser placerede ansøgere
+    {
+      const placedFromSlide = {};
+      const kapFromSlide = {};
+      for (const ud2 of s.udbud) {
+        kapFromSlide[ud2.udbudId] = {};
+        for (const [k,v] of Object.entries(ud2.kap||{})) kapFromSlide[ud2.udbudId][+k]=v;
+        for (const grp2 of (udbudInfo(ud2.udbudId)?.grupper||[])) {
+          for (const e of (ud2.slots?.[grp2.nr]||[])) {
+            if (!e.tom && (e.status==='optaget'||e.status==='uændret'))
+              placedFromSlide[e.id] = {udbudId:ud2.udbudId, gruppeNr:grp2.nr};
+          }
+        }
+      }
+      window._closedSlots = beregnLukkedePools(placedFromSlide, kapFromSlide);
+    }
+
     const grpRows = udata.grupper.filter(grp => (ud.kap?.[grp.nr] ?? grp.kap) > 0).map((grp,idx)=>{
       const kv      = ud.kap?.[grp.nr] ?? grp.kap;
       const entries = ud.slots?.[grp.nr] || [];
@@ -1408,10 +1505,22 @@ function buildSlide(s) {
       } else if (s.slideType === 'pladsflyt') {
         ekstraHTML = ''; // ingen kø-tekst på pladsflyt-sider
       } else {
-        // Brug køMap (reelt uplacerede) hvis tilgængeligt, ellers fald tilbage til køCount
-        const realKø = ud.køMap?.[grp.nr] ?? køCount;
-        const koeTxt = realKø > 0 ? `Ansøgere i kø: ${realKø}` : 'Ingen kø';
-        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">${koeTxt}</span>`;
+        const slotKey2 = `${ud.udbudId}|${grp.nr}`;
+        const optCount2 = entries.filter(e=>!e.tom&&e.status==='optaget').length;
+        const harLedigeP = optCount2 < kv; // ledige pladser = ingen reel kø
+        const poolLukket = window._closedSlots?.has(slotKey2);
+        const alleLaaste = poolLukket && entries
+          .filter(e=>!e.tom&&e.status==='optaget')
+          .every(e=>erEndeligLaast(e.id, ud.udbudId, grp.nr));
+        if (harLedigeP) {
+          ekstraHTML = ''; // ledige pladser → ingen kø at vise
+        } else if (alleLaaste) {
+          ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:700;color:#dc2626;">Lukket</span>`;
+        } else {
+          const realKø = ud.køMap?.[grp.nr] ?? køCount;
+          const koeTxt = realKø > 0 ? `Ansøgere i kø: ${realKø}` : 'Ingen kø';
+          ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">${koeTxt}</span>`;
+        }
       }
 
       return `
