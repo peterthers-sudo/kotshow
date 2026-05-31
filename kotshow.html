@@ -1634,6 +1634,8 @@ function buildSlide(s) {
       const entries = ud.slots?.[grp.nr] || [];
       // effectiveKv: stort datasæt → kun top-kv dublets vises; lille → alle dublets
       const effectiveKv = ANSØGERE.length > 26 ? kv : entries.length;
+      const badge   = ud.badges?.[grp.nr];
+      const nyPlads = s.slideType === 'pladsflyt' && badge?.startsWith('+');
       const slotsHTML = (ANSØGERE.length > 26 && s.slideType === 'midlertidig')
         ? midlertidigSlotHTML(entries, kv, grp.nr, ud.udbudId, vilRykkeIds)
         : s.slideType === 'clearing'
@@ -1642,8 +1644,6 @@ function buildSlide(s) {
         ? sortSlotEntries(entries, grp.nr).map(e=>avatarHTML(e,grp.nr,ud.udbudId,{vilRykkeIds})).join('')
         : sortSlotEntries(entries, grp.nr).map(e=>avatarHTML(nyPlads&&e.tom?{...e,ny:true}:e,grp.nr,ud.udbudId)).join('');
 
-      const badge   = ud.badges?.[grp.nr];
-      const nyPlads = s.slideType === 'pladsflyt' && badge?.startsWith('+');
       const gkvVal  = s.visStatus && ud.gkv?.[grp.nr];
       const koeValResult = s.slideType === 'result' ? (ud.koePerGrp?.[grp.nr] ?? 0) : 1;
       const isK1type = grp.nr === 10 || grp.nr === 60;
