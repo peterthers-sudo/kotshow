@@ -1654,16 +1654,18 @@ function buildSlide(s) {
       } else if (!harLedigeP && alleLaaste) {
         const lukketKøVal = s.slideType === 'result' ? (ud.koePerGrp?.[grp.nr] ?? 0) : 0;
         const lukketTxt = lukketKøVal > 0 ? 'Lukket med kø' : 'Lukket';
-        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:700;color:#dc2626;">${lukketTxt}</span>`;
+        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:600;color:#64748b;">${lukketTxt}</span>`;
       } else if (s.slideType === 'midlertidig') {
         ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">Ansøgninger ialt: ${aktivEntries.length}</span>`;
       } else if (s.slideType === 'result') {
         const koeVal = ud.koePerGrp?.[grp.nr] ?? 0;
         let koeTxt = '';
-        if (koeVal > 0) koeTxt = `Ansøgere i kø: ${koeVal}`;
+        if (koeVal > 0 && !harLedigeP) koeTxt = 'Lukket med kø';
+        else if (koeVal > 0) koeTxt = `Ansøgere i kø: ${koeVal}`;
         else if (optCount2 >= kv) koeTxt = 'Alle optaget';
         else koeTxt = 'Ledige pladser';
-        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">${koeTxt}</span>`;
+        const koeColor = (koeTxt === 'Lukket med kø') ? '#64748b' : '#94a3b8';
+        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:${koeTxt==='Lukket med kø'?'600':'400'};color:${koeColor};">${koeTxt}</span>`;
       } else if (s.slideType === 'pladsflyt') {
         ekstraHTML = '';
       } else {
