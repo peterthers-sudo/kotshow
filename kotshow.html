@@ -355,6 +355,14 @@ body {
   line-height:1;
   opacity:0.5;
 }
+.tom-plads.ny-plads {
+  opacity:0.9;
+  animation: nyPladsGlow 1.6s ease-in-out infinite;
+}
+@keyframes nyPladsGlow {
+  0%,100% { filter:drop-shadow(0 0 4px #a78bfa); }
+  50%      { filter:drop-shadow(0 0 10px #a78bfa) drop-shadow(0 0 4px #7c3aed); }
+}
 
 /* ── AFVISTE ──────────────────────────────────────────── */
 .rejected-box {
@@ -1397,7 +1405,7 @@ function erEndeligLaast(id, uddId, grpNr) {
 
 // ── RENDERING ─────────────────────────────────────────────────
 function avatarHTML(entry, grpNr, uddId, opts={}) {
-  if (entry.tom) return `<div class="tom-plads">🪑</div>`.repeat(entry.tom);
+  if (entry.tom) { const nyKls = entry.ny ? ' ny-plads' : ''; return `<div class="tom-plads${nyKls}">🪑</div>`.repeat(entry.tom); }
   const info = ansInfo(entry.id);
   const vilRykke = (opts.vilRykkeIds?.has(entry.id) && entry.status==='uændret') ? 'vil-rykke' : '';
   const cls = `avatar ans-${entry.id} ${entry.status||''} ${vilRykke}`;
@@ -1626,13 +1634,14 @@ function buildSlide(s) {
       const entries = ud.slots?.[grp.nr] || [];
       // effectiveKv: stort datasæt → kun top-kv dublets vises; lille → alle dublets
       const effectiveKv = ANSØGERE.length > 26 ? kv : entries.length;
+      const nyPlads = s.slideType === 'pladsflyt' && badge?.startsWith('+');
       const slotsHTML = (ANSØGERE.length > 26 && s.slideType === 'midlertidig')
         ? midlertidigSlotHTML(entries, kv, grp.nr, ud.udbudId, vilRykkeIds)
         : s.slideType === 'clearing'
         ? clearingSlotHTML(entries, effectiveKv, grp.nr, ud.udbudId)
         : s.slideType === 'midlertidig'
         ? sortSlotEntries(entries, grp.nr).map(e=>avatarHTML(e,grp.nr,ud.udbudId,{vilRykkeIds})).join('')
-        : sortSlotEntries(entries, grp.nr).map(e=>avatarHTML(e,grp.nr,ud.udbudId)).join('');
+        : sortSlotEntries(entries, grp.nr).map(e=>avatarHTML(nyPlads&&e.tom?{...e,ny:true}:e,grp.nr,ud.udbudId)).join('');
 
       const badge   = ud.badges?.[grp.nr];
       const gkvVal  = s.visStatus && ud.gkv?.[grp.nr];
