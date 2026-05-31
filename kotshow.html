@@ -676,6 +676,26 @@ body {
     transition: background 0.15s;
   }
   #pptBtn:hover { background: #6d28d9; }
+
+  /* ── PLADSFLYT-ANIMATION ─────────────────────────────── */
+  @keyframes badgeBounceIn {
+    0%   { transform: scale(0) translateY(-8px); opacity: 0; }
+    65%  { transform: scale(1.25) translateY(0); opacity: 1; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+  }
+  @keyframes groupPulse {
+    0%,100% { background: inherit; }
+    40%     { background: rgba(99,102,241,0.12); }
+  }
+  .slide.active .plus-badge  { animation: badgeBounceIn 0.45s ease 0.6s both; }
+  .slide.active .minus-badge { animation: badgeBounceIn 0.45s ease 0.2s both; }
+  .pf-flyer {
+    position: fixed; pointer-events: none; z-index: 9999;
+    font-size: 1.4rem; line-height: 1;
+    transition: left 0.75s cubic-bezier(0.4,0,0.2,1),
+                top  0.75s cubic-bezier(0.4,0,0.2,1),
+                opacity 0.2s ease;
+  }
 </style>
 </head>
 <body>
@@ -1714,6 +1734,50 @@ window.addEventListener('resize', () => { if (pptMode) scalePPT(); });
 window.visualViewport?.addEventListener('resize', () => { if (pptMode) scalePPT(); });
 document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && pptMode) exitPPT(); });
 
+
+function animerPladsflyt() {
+  const slide = document.querySelector('.slide.active');
+  if (!slide) return;
+  const minusBadges = [...slide.querySelectorAll('.minus-badge')];
+  const plusBadges  = [...slide.querySelectorAll('.plus-badge')];
+  if (!minusBadges.length) return;
+
+  // Pulse the affected group rows
+  slide.querySelectorAll('.group-row:has(.plus-badge), .group-row:has(.minus-badge)').forEach(row => {
+    row.style.animation = 'groupPulse 1.2s ease 0.3s';
+    setTimeout(() => row.style.animation = '', 1600);
+  });
+
+  // Fly chairs from each minus-group to its plus-group
+  minusBadges.forEach((mb, i) => {
+    const pb = plusBadges[i];
+    if (!pb) return;
+    const fromR = mb.closest('.group-row-slots')?.getBoundingClientRect()
+                || mb.getBoundingClientRect();
+    const toR   = pb.closest('.group-row-slots')?.getBoundingClientRect()
+                || pb.getBoundingClientRect();
+
+    // Number of chairs to fly = count in badge text
+    const n = parseInt(mb.textContent.match(/\d+/)?.[0] || '1');
+    for (let j = 0; j < Math.min(n, 3); j++) {
+      const delay = 300 + j * 120;
+      setTimeout(() => {
+        const el = document.createElement('div');
+        el.className = 'pf-flyer';
+        el.textContent = '🪑';
+        el.style.left = (fromR.left + fromR.width/2 + j*10 - 12) + 'px';
+        el.style.top  = (fromR.top  + fromR.height/2 - 12) + 'px';
+        document.body.appendChild(el);
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          el.style.left    = (toR.left + toR.width/2 + j*10 - 12) + 'px';
+          el.style.top     = (toR.top  + toR.height/2 - 12) + 'px';
+        }));
+        setTimeout(() => { el.style.opacity='0'; setTimeout(()=>el.remove(),250); }, 750);
+      }, delay);
+    }
+  });
+}
+
 function renderAll() {
   const vp = document.getElementById('slideViewport');
   vp.innerHTML = '';
@@ -1747,6 +1811,7 @@ function goTo(n) {
   dots[current].classList.add('active');
   updateNav();
   if (pptMode) { setTimeout(scalePPT, 50); updatePPTNav(); }
+  if (SLIDES[current]?.slideType === 'pladsflyt') setTimeout(animerPladsflyt, 150);
 }
 function navigate(dir) { const n=current+dir; if(n>=0&&n<SLIDES.length) goTo(n); }
 function updateNav() {
