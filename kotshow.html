@@ -1652,23 +1652,19 @@ function buildSlide(s) {
       if (!s.slideType || s.slideType === 'tom') {
         ekstraHTML = '';
       } else if (!harLedigeP && alleLaaste) {
-        const isK2grp = grp.nr === 20 || grp.nr === 70;
         const lukketKøVal = s.slideType === 'result' ? (ud.koePerGrp?.[grp.nr] ?? 0) : 0;
-        const lukketTxt = isK2grp
-          ? (lukketKøVal > 0 ? 'ALLE OPTAGET (KØ)' : 'ALLE OPTAGET')
-          : (lukketKøVal > 0 ? 'LUKKET MED KØ'     : 'LUKKET');
+        const lukketTxt = lukketKøVal > 0 ? 'ALLE OPTAGET (KØ)' : 'ALLE OPTAGET';
         ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:600;color:#64748b;">${lukketTxt}</span>`;
       } else if (s.slideType === 'midlertidig') {
         ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">ANSØGNINGER IALT: ${aktivEntries.length}</span>`;
       } else if (s.slideType === 'result') {
         const koeVal = ud.koePerGrp?.[grp.nr] ?? 0;
-        const isK2grpR = grp.nr === 20 || grp.nr === 70;
         let koeTxt = '';
-        if (koeVal > 0 && !harLedigeP) koeTxt = isK2grpR ? 'ALLE OPTAGET (KØ)' : 'LUKKET MED KØ';
+        if (koeVal > 0 && !harLedigeP) koeTxt = 'ALLE OPTAGET (KØ)';
         else if (koeVal > 0)            koeTxt = `ANSØGERE I KØ: ${koeVal}`;
         else if (optCount2 >= kv)       koeTxt = 'ALLE OPTAGET';
         else                            koeTxt = 'LEDIGE PLADSER';
-        const lukketStyle = koeTxt==='LUKKET MED KØ'||koeTxt==='ALLE OPTAGET (KØ)';
+        const lukketStyle = koeTxt==='ALLE OPTAGET (KØ)';
         ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:${lukketStyle?'600':'400'};color:${lukketStyle?'#64748b':'#94a3b8'};">${koeTxt}</span>`;
       } else if (s.slideType === 'pladsflyt') {
         ekstraHTML = '';
