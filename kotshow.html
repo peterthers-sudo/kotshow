@@ -1173,7 +1173,7 @@ function generateSlides(states) {
     if (state.type==='midlertidig') {
       const prevPlaced = state.placed;
       slides.push({
-        titel:`Runde ${state.runde} · Midlertidig placering`, slideType:'midlertidig',
+        titel:`Runde ${state.runde} · Midlertidig placering`, slideType:'midlertidig', runde:state.runde,
         slideNum: sn,
         note:'Alle ansøgere søger samtlige prioriteter simultant – samme ansøger kan stå i flere grupper på samme tid.',
         noteStar:true, legende:['uændret','midlertidig'],
@@ -1725,7 +1725,7 @@ function buildSlide(s) {
     }
   }
   const ikkeplacerede = ANSØGERE.filter(a=>!placeredeIds.has(a.id));
-  const ikkeBar = (!s.visStatus && s.slideType && s.slideType !== 'tom') ? `
+  const ikkeBar = (!s.visStatus && s.slideType && s.slideType !== 'tom' && !(s.slideType==='midlertidig' && s.runde===1)) ? `
     <div class="ikke-placeret-bar">
       <span class="ikke-placeret-label">Ikke placeret</span>
       <div class="ikke-placeret-slots">
