@@ -598,6 +598,76 @@ body {
       max-width: 100%;
     }
   }
+
+  /* ── PRÆSENTATIONSTILSTAND ───────────────────────────── */
+  body.ppt-mode {
+    background: #000;
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+  }
+  body.ppt-mode .nav { display: none; }
+  body.ppt-mode .slide-viewport {
+    position: fixed;
+    border-radius: 0;
+    transform-origin: top left;
+    max-width: none;
+    box-shadow: none;
+  }
+  body.ppt-mode .slide-note,
+  body.ppt-mode .ikke-placeret-bar,
+  body.ppt-mode .legend,
+  body.ppt-mode .laas-legende { display: none !important; }
+
+  /* Minimal navigations-overlay i bunden */
+  .ppt-nav {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    background: rgba(10,15,30,0.75);
+    backdrop-filter: blur(8px);
+    border-radius: 10px;
+    padding: 10px 20px;
+    gap: 20px;
+    align-items: center;
+    color: #e2e8f0;
+    font-family: var(--font-main);
+    font-size: 0.85rem;
+  }
+  body.ppt-mode .ppt-nav { display: flex; }
+  .ppt-nav button {
+    background: rgba(255,255,255,0.12);
+    border: none;
+    color: #e2e8f0;
+    border-radius: 6px;
+    padding: 6px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-main);
+    transition: background 0.15s;
+  }
+  .ppt-nav button:hover:not(:disabled) { background: rgba(255,255,255,0.22); }
+  .ppt-nav button:disabled { opacity: 0.25; cursor: not-allowed; }
+  .ppt-nav-counter { color: #94a3b8; font-size: 0.78rem; min-width: 80px; text-align: center; }
+
+  /* PPT-knap i nav */
+  #pptBtn {
+    background: #7c3aed;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 14px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-main);
+    transition: background 0.15s;
+  }
+  #pptBtn:hover { background: #6d28d9; }
 </style>
 </head>
 <body>
@@ -680,7 +750,14 @@ const MOTIVATION = {
   <div id="forside-hint">Klik for at starte ›</div>
 </div>
 
+<div class="ppt-nav" id="pptNav">
+  <button id="pptPrevBtn" onclick="navigate(-1)">←</button>
+  <div class="ppt-nav-counter" id="pptCounter"></div>
+  <button id="pptNextBtn" onclick="navigate(1)">→</button>
+  <button onclick="exitPPT()" style="margin-left:8px;background:rgba(239,68,68,0.3)">✕ Afslut</button>
+</div>
 <nav class="nav">
+  <button id="pptBtn" onclick="enterPPT()" title="Præsentationstilstand (F)">⛶ Præsenter</button>
   <button id="prevBtn" onclick="navigate(-1)">Forrige trin</button>
   <div class="nav-counter" id="navCounter">Trin 1</div>
   <div class="nav-dots" id="navDots"></div>
@@ -1463,6 +1540,61 @@ function buildSlide(s) {
 let current = 0;
 let SLIDES = [];
 
+
+// ── PRÆSENTATIONSTILSTAND ─────────────────────────────────
+let pptMode = false;
+
+function enterPPT() {
+  pptMode = true;
+  document.body.classList.add('ppt-mode');
+  document.documentElement.requestFullscreen?.().catch(()=>{});
+  scalePPT();
+  updatePPTNav();
+}
+
+function exitPPT() {
+  pptMode = false;
+  document.body.classList.remove('ppt-mode');
+  document.exitFullscreen?.().catch(()=>{});
+  const vp = document.getElementById('slideViewport');
+  vp.style.transform = '';
+  vp.style.width = '';
+  vp.style.height = '';
+  vp.style.left = '';
+  vp.style.top = '';
+}
+
+function scalePPT() {
+  if (!pptMode) return;
+  const vp = document.getElementById('slideViewport');
+  // Reset for measurement
+  vp.style.transform = '';
+  vp.style.width = '';
+  vp.style.height = '';
+  vp.style.left = '0';
+  vp.style.top = '0';
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const nw = vp.offsetWidth  || 1024;
+  const nh = vp.offsetHeight || 576;
+  const scale = Math.min(vw / nw, vh / nh) * 0.97;
+  vp.style.width  = nw + 'px';
+  vp.style.height = nh + 'px';
+  vp.style.left   = Math.round((vw - nw * scale) / 2) + 'px';
+  vp.style.top    = Math.round((vh - nh * scale) / 2) + 'px';
+  vp.style.transformOrigin = 'top left';
+  vp.style.transform = `scale(${scale})`;
+}
+
+function updatePPTNav() {
+  document.getElementById('pptCounter').textContent = `${current+1} / ${SLIDES.length}`;
+  document.getElementById('pptPrevBtn').disabled = current === 0;
+  document.getElementById('pptNextBtn').disabled = current === SLIDES.length - 1;
+}
+
+window.addEventListener('resize', () => { if (pptMode) scalePPT(); });
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && pptMode) exitPPT(); });
+
 function renderAll() {
   const vp = document.getElementById('slideViewport');
   vp.innerHTML = '';
@@ -1488,13 +1620,14 @@ function goTo(n) {
   slides[current].classList.add('active');
   dots[current].classList.add('active');
   updateNav();
+  if (pptMode) { setTimeout(scalePPT, 50); updatePPTNav(); }
 }
 function navigate(dir) { const n=current+dir; if(n>=0&&n<SLIDES.length) goTo(n); }
 function updateNav() {
   document.getElementById('navCounter').textContent=`Trin ${current+1} / ${SLIDES.length}`;
   const prevS = current > 0 ? SLIDES[current-1] : null;
   const nextS = current < SLIDES.length-1 ? SLIDES[current+1] : null;
-  const titl = s => s.type==='intro' ? 'Kartotek' : (s.titel||'');
+  const titl = s => s.type==='intro' ? 'Oversigt' : (s.titel||'');
   const pb = document.getElementById('prevBtn');
   const nb = document.getElementById('nextBtn');
   pb.disabled = !prevS;
