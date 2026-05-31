@@ -1657,7 +1657,7 @@ function buildSlide(s) {
         const lukketTxt = lukketKøVal > 0 ? 'ALLE OPTAGET (KØ)' : 'ALLE OPTAGET';
         ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:600;color:#64748b;">${lukketTxt}</span>`;
       } else if (s.slideType === 'midlertidig') {
-        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">ANSØGNINGER IALT: ${aktivEntries.length}</span>`;
+        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:600;color:#64748b;">ANSØGNINGER IALT: ${aktivEntries.length}</span>`;
       } else if (s.slideType === 'result') {
         const koeVal = ud.koePerGrp?.[grp.nr] ?? 0;
         let koeTxt = '';
@@ -1665,8 +1665,7 @@ function buildSlide(s) {
         else if (koeVal > 0)            koeTxt = `ANSØGERE I KØ: ${koeVal}`;
         else if (optCount2 >= kv)       koeTxt = 'ALLE OPTAGET';
         else                            koeTxt = 'LEDIGE PLADSER';
-        const lukketStyle = koeTxt==='ALLE OPTAGET (KØ)';
-        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:${lukketStyle?'600':'400'};color:${lukketStyle?'#64748b':'#94a3b8'};">${koeTxt}</span>`;
+        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:600;color:#64748b;">${koeTxt}</span>`;
       } else if (s.slideType === 'pladsflyt') {
         ekstraHTML = '';
       } else {
@@ -1676,7 +1675,7 @@ function buildSlide(s) {
         } else {
           const realKø = ud.køMap?.[grp.nr] ?? køCount;
           const koeTxt = realKø > 0 ? `ANSØGERE I KØ: ${realKø}` : 'INGEN KØ';
-          ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">${koeTxt}</span>`;
+          ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:600;color:#64748b;">${koeTxt}</span>`;
         }
       }
 
