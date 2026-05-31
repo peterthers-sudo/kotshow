@@ -1456,6 +1456,8 @@ function clearingSlotHTML(entries, kv, grpNr, uddId) {
   const allSorted = entries.filter(e=>!e.tom).sort((a,b)=>rank(b.id)-rank(a.id));
   const topIds = new Set(allSorted.slice(0, kv).map(e=>e.id));
   const visDublets = dublets.filter(e => topIds.has(e.id));
+  if (dublets.length > visDublets.length)
+    console.log(`[clearing] ${uddId} grp${grpNr}: entries=${entries.length}, kv=${kv}, dublets=${dublets.length}, visDublets=${visDublets.length}`);
   return [...opt, ...toms, ...visDublets].map(e=>avatarHTML(e,grpNr,uddId)).join('');
 }
 
