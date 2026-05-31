@@ -1725,7 +1725,7 @@ function buildSlide(s) {
     }
   }
   const ikkeplacerede = ANSØGERE.filter(a=>!placeredeIds.has(a.id));
-  const ikkeBar = !s.visStatus ? `
+  const ikkeBar = (!s.visStatus && s.slideType && s.slideType !== 'tom') ? `
     <div class="ikke-placeret-bar">
       <span class="ikke-placeret-label">Ikke placeret</span>
       <div class="ikke-placeret-slots">
@@ -1803,7 +1803,7 @@ function buildSlide(s) {
       <div class="edu-sections">${sections}</div>
       ${rejectedHTML}
       ${legendeHTML(s.legende)}
-      ${s.slideType==='clearing' ? ikkeBar : ''}
+      ${ikkeBar}
     </div>`;
 }
 
