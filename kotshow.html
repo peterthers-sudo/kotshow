@@ -1464,8 +1464,10 @@ function midlertidigSlotHTML(entries, kap, grpNr, uddId, vilRykkeIds) {
   const visUæ  = uændret;
   const visMid = midlertidig.slice(0, Math.max(0, maxVis - uændret.length));
   const skjulte = midlertidig.length - visMid.length;
+  const toms = entries.filter(e=>e.tom);
   const opts = {vilRykkeIds};
   let html = [...visUæ, ...visMid].map(e=>avatarHTML(e,grpNr,uddId,opts)).join('');
+  html += toms.map(e=>avatarHTML(e,grpNr,uddId)).join('');
   if (skjulte > 0)
     html += `<span style="font-size:0.65rem;color:#94a3b8;font-weight:700;white-space:nowrap;align-self:center;">+${skjulte} mere</span>`;
   return html;
