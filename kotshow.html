@@ -1647,7 +1647,8 @@ function buildSlide(s) {
         let koeTxt = '';
         if (koeVal > 0) koeTxt = `Ansøgere i kø: ${koeVal}`;
         else if (optCount2 >= kv) koeTxt = 'Alle optaget';
-        ekstraHTML = koeTxt ? `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">${koeTxt}</span>` : '';
+        else koeTxt = 'Ledige pladser';
+        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">${koeTxt}</span>`;
       } else if (s.slideType === 'pladsflyt') {
         ekstraHTML = '';
       } else {
