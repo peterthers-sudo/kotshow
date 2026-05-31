@@ -449,9 +449,9 @@ body {
 /* ── KARTOTEK (intro-slide) ───────────────────────────── */
 .kartotek-grid {
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
-  gap:24px 16px;
-  padding:16px 4px;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:16px 12px;
+  padding:12px 4px;
 }
 .kartotek-kort {
   position:relative; display:flex; flex-direction:column; gap:6px;
@@ -669,19 +669,16 @@ body {
     min-height:120px;
   }
   .edu-placeholder-inner { text-align:center; padding:20px; }
-  .edu-placeholder-ikon { font-size:2.2rem; margin-bottom:8px; animation:pladsHolderBob 2s ease-in-out infinite; }
+  .edu-placeholder-ikon { font-size:2.2rem; margin-bottom:8px; }
   .edu-placeholder-titel { font-size:1rem; font-weight:800; color:#475569; margin-bottom:4px; }
   .edu-placeholder-sub { font-size:0.8rem; font-weight:700; color:#7c3aed; margin-bottom:8px; letter-spacing:0.05em; }
   .edu-placeholder-tekst { font-size:0.65rem; color:#94a3b8; max-width:220px; line-height:1.5; }
-  @keyframes pladsHolderBob {
-    0%,100% { transform:translateY(0); }
-    50%      { transform:translateY(-5px); }
-  }
+
   .intro-layout { display:flex; flex-direction:column; }
   .intro-col-udbud, .intro-col-kartotek { min-width:0; }
   body.layout-h .intro-layout { flex-direction:row; gap:12px; align-items:start; height:100%; }
   body.layout-h .intro-col-udbud { width:34%; flex-shrink:0; }
-  body.layout-h .intro-col-kartotek { flex:1; overflow:hidden; }
+  body.layout-h .intro-col-kartotek { flex:1; overflow:auto; min-width:0; }
   body.layout-h .edu-sections {
     display: grid;
     grid-template-columns: 1fr 1fr;
