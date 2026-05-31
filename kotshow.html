@@ -1614,8 +1614,14 @@ function buildSlide(s) {
           .filter(a => !placedIds.has(a.id) &&
                        a.ansøgninger.some(ans => ans.udbud===ud.udbudId && ans.grupper.includes(grp.nr)))
           .sort((a,b) => b.gns - a.gns)[0];
-        if (firstKø && Math.abs(firstKø.gns - gkvNum) < 0.001)
-          lodtrækningHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:700;color:#7c3aed;">LODTRÆKNING</span>`;
+        if (firstKø && Math.abs(firstKø.gns - gkvNum) < 0.001) {
+          const tabte = ANSØGERE
+            .filter(a => !placedIds.has(a.id) &&
+                         a.ansøgninger.some(ans => ans.udbud===ud.udbudId && ans.grupper.includes(grp.nr)) &&
+                         Math.abs(a.gns - gkvNum) < 0.001)
+            .map(a => a.id).join(', ');
+          lodtrækningHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:700;color:#7c3aed;">LODTRÆKNING (${tabte})</span>`;
+        }
       }
       const aktivEntries = entries.filter(e => !e.tom);
       const køCount = Math.max(0, aktivEntries.length - kv);
