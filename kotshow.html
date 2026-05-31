@@ -1616,7 +1616,8 @@ function buildSlide(s) {
       const badge   = ud.badges?.[grp.nr];
       const gkvVal  = s.visStatus && ud.gkv?.[grp.nr];
       const koeValResult = s.slideType === 'result' ? (ud.koePerGrp?.[grp.nr] ?? 0) : 1;
-      const gkvHTML = (gkvVal && koeValResult > 0)
+      const isK1type = grp.nr === 10 || grp.nr === 60;
+      const gkvHTML = (gkvVal && koeValResult > 0 && isK1type)
         ? `<span style="font-size:0.62rem;color:#64748b;margin-left:8px;">GK: <strong>${gkvVal}</strong></span>` : '';
 
       // Lodtrækning: K1-gruppe lukket, og første i kø har samme gns som GK
