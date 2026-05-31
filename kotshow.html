@@ -134,7 +134,7 @@ body {
 .slide.active .avatar.dublet {
   animation: dubletFadeOut 1.8s ease 0.5s both;
 }
-.avatar.dublet { opacity:0; transform:scale(0); width:0; min-width:0; flex-shrink:1; overflow:hidden; }
+.avatar.dublet { opacity:0; transform:scale(0); width:0; min-width:0; height:0; flex-shrink:1; overflow:hidden; }
 
 @keyframes avatarFadeIn {
   from { opacity:0; transform:scale(0.7); }
@@ -204,7 +204,8 @@ body {
   align-items: center;
   gap: 5px;
   padding: 7px 12px;
-  min-height: 54px;
+  min-height: 0;
+  transition: padding 0.5s ease;
 }
 
 /* ── UDDANNELSES-LABEL ────────────────────────────────── */
@@ -615,23 +616,24 @@ body {
     box-shadow: none;
   }
   body.ppt-mode .slide-note,
-  body.ppt-mode .ikke-placeret-bar,
   body.ppt-mode .legend,
   body.ppt-mode .laas-legende { display: none !important; }
+  body.ppt-mode .ikke-placeret-bar { padding: 3px 0; gap: 6px; }
+  body.ppt-mode .ikke-placeret-label { font-size: 0.6rem; }
+  body.ppt-mode .ikke-placeret-slots { gap: 3px; }
+  body.ppt-mode .avatar-mini { width: 18px; height: 18px; font-size: 0.52rem; border-radius: 3px; }
 
   /* Minimal navigations-overlay i bunden */
   .ppt-nav {
     display: none;
     position: fixed;
-    bottom: 24px;
+    bottom: 16px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 9999;
-    background: rgba(10,15,30,0.75);
-    backdrop-filter: blur(8px);
-    border-radius: 10px;
-    padding: 10px 20px;
-    gap: 20px;
+    background: transparent;
+    padding: 0;
+    gap: 12px;
     align-items: center;
     color: #e2e8f0;
     font-family: var(--font-main);
@@ -639,20 +641,27 @@ body {
   }
   body.ppt-mode .ppt-nav { display: flex; }
   .ppt-nav button {
-    background: rgba(255,255,255,0.12);
+    background: rgba(10,15,30,0.45);
     border: none;
     color: #e2e8f0;
-    border-radius: 6px;
-    padding: 6px 16px;
-    font-size: 0.85rem;
-    font-weight: 600;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+    font-weight: 700;
     cursor: pointer;
     font-family: var(--font-main);
     transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
   }
-  .ppt-nav button:hover:not(:disabled) { background: rgba(255,255,255,0.22); }
-  .ppt-nav button:disabled { opacity: 0.25; cursor: not-allowed; }
-  .ppt-nav-counter { color: #94a3b8; font-size: 0.78rem; min-width: 80px; text-align: center; }
+  .ppt-nav button:hover:not(:disabled) { background: rgba(10,15,30,0.75); }
+  .ppt-nav button:disabled { opacity: 0.2; cursor: not-allowed; }
+  .ppt-nav-counter { color: rgba(255,255,255,0.7); font-size: 0.72rem; min-width: 60px; text-align: center; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+  .ppt-exit-btn { background: rgba(239,68,68,0.3) !important; border-radius: 6px !important; width: auto !important; height: auto !important; padding: 6px 12px !important; font-size: 0.78rem !important; }
+  .ppt-exit-btn:hover { background: rgba(239,68,68,0.85) !important; }
 
   /* PPT-knap i nav */
   #pptBtn {
@@ -754,7 +763,7 @@ const MOTIVATION = {
   <button id="pptPrevBtn" onclick="navigate(-1)">←</button>
   <div class="ppt-nav-counter" id="pptCounter"></div>
   <button id="pptNextBtn" onclick="navigate(1)">→</button>
-  <button onclick="exitPPT()" style="margin-left:8px;background:rgba(239,68,68,0.3)">✕ Afslut</button>
+  <button onclick="exitPPT()" class="ppt-exit-btn">✕ Afslut</button>
 </div>
 <nav class="nav">
   <button id="pptBtn" onclick="enterPPT()" title="Præsentationstilstand (F)">⛶ Præsenter</button>
