@@ -664,6 +664,17 @@ body {
 
 
 
+  .edu-placeholder { display:none; }
+  body.layout-h .edu-placeholder {
+    display:flex; align-items:center; justify-content:center;
+    border:2px dashed #cbd5e1; border-radius:12px;
+    background:repeating-linear-gradient(135deg,#f8fafc 0px,#f8fafc 10px,#f1f5f9 10px,#f1f5f9 20px);
+    min-height:120px;
+  }
+  .edu-placeholder-inner { text-align:center; padding:20px; }
+  .edu-placeholder-titel { font-size:1rem; font-weight:800; color:#475569; margin-bottom:4px; }
+  .edu-placeholder-sub { font-size:0.8rem; font-weight:700; color:#7c3aed; margin-bottom:8px; letter-spacing:0.05em; }
+  .edu-placeholder-tekst { font-size:0.65rem; color:#94a3b8; max-width:220px; line-height:1.5; }
   .intro-layout { display:flex; flex-direction:column; }
   .intro-col-udbud, .intro-col-kartotek { min-width:0; }
 
@@ -1866,7 +1877,14 @@ function buildSlide(s) {
     </div>
     ${modalHTML}
     <div class="slide-body">
-      <div class="edu-sections">${sections}</div>
+      <div class="edu-sections">${sections}${UDBUD.length < 4 ? `
+        <div class="edu-placeholder">
+          <div class="edu-placeholder-inner">
+            <div class="edu-placeholder-titel">Ny uddannelse på vej</div>
+            <div class="edu-placeholder-sub">Åbner snart!</div>
+            <div class="edu-placeholder-tekst">Vi arbejder på at tilføje endnu en spændende uddannelse til KOT-fordelingen.</div>
+          </div>
+        </div>` : ''}</div>
       ${rejectedHTML}
       ${legendeHTML(s.legende)}
       ${ikkeBar}
