@@ -787,7 +787,6 @@ body {
      KONFIGURATION — Rediger kun herunder
      ══════════════════════════════════════════════════════ -->
 <script>
-const STORT_DATASÆT = false;
 const ANSØGERE = [
   { id:"A", navn:"Anders",   gns:12.0, kval:14, ansøgninger:[{prio:1,udbud:"A",grupper:[10]},{prio:2,udbud:"B",grupper:[20]}] },
   { id:"B", navn:"Bente",    gns:11.8, kval:3,  ansøgninger:[{prio:1,udbud:"A",grupper:[10]},{prio:2,udbud:"C",grupper:[10,20]}] },
@@ -1073,8 +1072,7 @@ function computePladsflyt(placed, kap) {
           });
         }).length;
         if (ventendeFrom > 0) {
-          if ([60,70].includes(fromGrp)) console.log(`Spring over grp.${fromGrp} i ${uddId}: ${ventendeFrom} vil ind der`);
-          continue;
+          if ([60,70].includes(fromGrp))           continue;
         }
 
         // Find en gruppe i SAMME POOL med efterspørgsel
@@ -1133,41 +1131,6 @@ function runDA() {
 }
 
 // ── SLIDE-GENERATOR ───────────────────────────────────────────
-function slotStatus(id, placedInSlot, stateType) {
-  if (stateType==='midlertidig') return placedInSlot ? 'uændret' : 'midlertidig';
-  if (stateType==='clearing')   return placedInSlot ? 'optaget'  : 'dublet';
-  return 'optaget';
-}
-
-function buildSlotEntries(ids, slotKey, state) {
-  const [uddId, grpNr] = parseSKey(slotKey);
-  const kap = state.kap[uddId]?.[grpNr] ?? 0;
-  const entries = [];
-
-  // For midlertidig: prevPlaced = state.placed (previous round)
-  // For clearing: placed = state.placed (new)
-  for (const id of ids) {
-    let isPlacedHere = false;
-    if (state.type==='midlertidig') {
-      const p = state.placed[id];
-      isPlacedHere = p && p.udbudId===uddId && p.gruppeNr===+grpNr;
-    } else {
-      const p = state.placed[id];
-      isPlacedHere = p && p.udbudId===uddId && p.gruppeNr===+grpNr;
-    }
-    entries.push({id, status: slotStatus(id, isPlacedHere, state.type)});
-  }
-
-  // Tom-pladser (kun på clearing og pladsflyt-slides)
-  if (state.type==='clearing' || state.type==='pladsflyt' || state.type==='pladsflyt_check') {
-    const optCount = entries.filter(e=>e.status==='optaget').length;
-    const tom = Math.max(0, kap - optCount);
-    if (tom > 0) entries.push({tom});
-  }
-
-  return entries;
-}
-
 function gkvForGrp(placed, uddId, grpNr) {
   const f = rankField(grpNr);
   const vals = Object.entries(placed)
@@ -1587,45 +1550,44 @@ function buildSlide(s) {
     {hdr:'#1a6b6b', bg:'#f0f8f8', brd:'#b8dada'},
   ];
 
+  // Beregn én gang for hele slide (ikke per udbud-sektion)
+  {
+    const placedFromSlide = {};
+    const kapFromSlide = {};
+    for (const ud2 of s.udbud) {
+      kapFromSlide[ud2.udbudId] = {};
+      for (const [k,v] of Object.entries(ud2.kap||{})) kapFromSlide[ud2.udbudId][+k]=v;
+      for (const grp2 of (udbudInfo(ud2.udbudId)?.grupper||[])) {
+        for (const e of (ud2.slots?.[grp2.nr]||[])) {
+          if (!e.tom && (e.status==='optaget'||e.status==='uændret'))
+            placedFromSlide[e.id] = {udbudId:ud2.udbudId, gruppeNr:grp2.nr};
+        }
+      }
+    }
+    window._closedSlots = beregnLukkedePools(placedFromSlide, kapFromSlide);
+  }
+
+  const vilRykkeIds = new Set();
+  if (s.slideType === 'midlertidig') {
+    for (const ud2 of s.udbud) {
+      for (const [grpNrStr, slotEntries] of Object.entries(ud2.slots || {})) {
+        const grpNr2 = +grpNrStr;
+        const kv2 = ud2.kap?.[grpNr2] ?? (udbudInfo(ud2.udbudId)?.grupper.find(g=>g.nr===grpNr2)?.kap ?? 0);
+        const f2 = rankField(grpNr2);
+        const rank2 = id => ansInfo(id)?.[f2] ?? 0;
+        const uæ2 = slotEntries.filter(e=>!e.tom && e.status==='uændret');
+        const mid2 = slotEntries.filter(e=>!e.tom && e.status==='midlertidig')
+          .sort((a,b) => rank2(b.id) - rank2(a.id));
+        const visMid2 = mid2.slice(0, Math.max(0, Math.max(kv2, uæ2.length) - uæ2.length));
+        for (const e of visMid2) vilRykkeIds.add(e.id);
+      }
+    }
+  }
+
   const sections = s.udbud.map(ud=>{
     const udata  = udbudInfo(ud.udbudId);
     const udIdx  = UDBUD.indexOf(udata);
     const col    = COLORS[udIdx % COLORS.length];
-
-    // Lukkede pools: beregn for alle slides der viser placerede ansøgere
-    {
-      const placedFromSlide = {};
-      const kapFromSlide = {};
-      for (const ud2 of s.udbud) {
-        kapFromSlide[ud2.udbudId] = {};
-        for (const [k,v] of Object.entries(ud2.kap||{})) kapFromSlide[ud2.udbudId][+k]=v;
-        for (const grp2 of (udbudInfo(ud2.udbudId)?.grupper||[])) {
-          for (const e of (ud2.slots?.[grp2.nr]||[])) {
-            if (!e.tom && (e.status==='optaget'||e.status==='uændret'))
-              placedFromSlide[e.id] = {udbudId:ud2.udbudId, gruppeNr:grp2.nr};
-          }
-        }
-      }
-      window._closedSlots = beregnLukkedePools(placedFromSlide, kapFromSlide);
-    }
-
-    // Kun ansøgere der rent faktisk er inden for kapaciteten i deres nye midlertidige slot
-    const vilRykkeIds = new Set();
-    if (s.slideType === 'midlertidig') {
-      for (const ud2 of s.udbud) {
-        for (const [grpNrStr, slotEntries] of Object.entries(ud2.slots || {})) {
-          const grpNr2 = +grpNrStr;
-          const kv2 = ud2.kap?.[grpNr2] ?? (udbudInfo(ud2.udbudId)?.grupper.find(g=>g.nr===grpNr2)?.kap ?? 0);
-          const f2 = rankField(grpNr2);
-          const rank2 = id => ansInfo(id)?.[f2] ?? 0;
-          const uæ2 = slotEntries.filter(e=>!e.tom && e.status==='uændret');
-          const mid2 = slotEntries.filter(e=>!e.tom && e.status==='midlertidig')
-            .sort((a,b) => rank2(b.id) - rank2(a.id));
-          const visMid2 = mid2.slice(0, Math.max(0, Math.max(kv2, uæ2.length) - uæ2.length));
-          for (const e of visMid2) vilRykkeIds.add(e.id);
-        }
-      }
-    }
 
     const grpRows = udata.grupper.filter(grp => (ud.kap?.[grp.nr] ?? grp.kap) > 0).map((grp,idx)=>{
       const kv      = ud.kap?.[grp.nr] ?? grp.kap;
