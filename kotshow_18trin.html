@@ -355,6 +355,24 @@ body {
   line-height:1;
   opacity:0.5;
 }
+.tom-plads.ny-plads {
+  opacity:0.75;
+  position:relative;
+}
+.tom-plads.ny-plads::after {
+  content:'NY';
+  position:absolute;
+  top:-7px; right:-7px;
+  background:#7c3aed;
+  color:#fff;
+  font-size:0.38rem;
+  font-weight:900;
+  letter-spacing:0.03em;
+  padding:1px 3px;
+  border-radius:3px;
+  line-height:1.4;
+  pointer-events:none;
+}
 
 /* ── AFVISTE ──────────────────────────────────────────── */
 .rejected-box {
@@ -431,9 +449,9 @@ body {
 /* ── KARTOTEK (intro-slide) ───────────────────────────── */
 .kartotek-grid {
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
-  gap:24px 16px;
-  padding:16px 4px;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:16px 12px;
+  padding:12px 4px;
 }
 .kartotek-kort {
   position:relative; display:flex; flex-direction:column; gap:6px;
@@ -643,6 +661,29 @@ body {
   body.ppt-mode .legend,
   body.ppt-mode .laas-legende { display: none !important; }
   body.ppt-mode .ikke-placeret-bar { padding: 3px 0; gap: 6px; }
+
+
+
+  .edu-placeholder { display:none; }
+  body.layout-h .edu-placeholder {
+    display:flex; align-items:center; justify-content:center;
+    border:2px dashed #cbd5e1; border-radius:12px;
+    background:repeating-linear-gradient(135deg,#f8fafc 0px,#f8fafc 10px,#f1f5f9 10px,#f1f5f9 20px);
+    min-height:120px;
+  }
+  .edu-placeholder-inner { text-align:center; padding:20px; }
+  .edu-placeholder-titel { font-size:1rem; font-weight:800; color:#475569; margin-bottom:4px; }
+  .edu-placeholder-sub { font-size:0.8rem; font-weight:700; color:#7c3aed; margin-bottom:8px; letter-spacing:0.05em; }
+  .edu-placeholder-tekst { font-size:0.65rem; color:#94a3b8; max-width:220px; line-height:1.5; }
+  .intro-layout { display:flex; flex-direction:column; }
+  .intro-col-udbud, .intro-col-kartotek { min-width:0; }
+
+  body.layout-h .edu-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    align-items: start;
+  }
   body.ppt-mode .ikke-placeret-label { font-size: 0.6rem; }
   body.ppt-mode .ikke-placeret-slots { gap: 3px; }
   body.ppt-mode .avatar-mini { width: 18px; height: 18px; font-size: 0.52rem; border-radius: 3px; }
@@ -685,6 +726,8 @@ body {
   .ppt-nav button:disabled { opacity: 0.2; cursor: not-allowed; }
   .ppt-nav-counter { color: rgba(255,255,255,0.7); font-size: 0.72rem; min-width: 60px; text-align: center; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
   .ppt-exit-btn { background: rgba(239,68,68,0.3) !important; border-radius: 6px !important; width: auto !important; height: auto !important; padding: 6px 12px !important; font-size: 0.78rem !important; }
+  .ppt-layout-btn { font-size:1.1rem !important; }
+  body.layout-h .ppt-layout-btn { background:rgba(124,58,237,0.55) !important; }
   .ppt-exit-btn:hover { background: rgba(239,68,68,0.85) !important; }
 
   /* PPT-knap i nav */
@@ -922,7 +965,7 @@ const MOTIVATION = {
   <button id="pptPrevBtn" onclick="navigate(-1)">←</button>
   <div class="ppt-nav-counter" id="pptCounter"></div>
   <button id="pptNextBtn" onclick="navigate(1)">→</button>
-  <button onclick="exitPPT()" class="ppt-exit-btn">✕ Afslut</button>
+  <button onclick="toggleLayout()" class="ppt-layout-btn" id="pptLayoutBtn" title="Skift layout">⊞</button>
 </div>
 <nav class="nav">
   <button id="pptBtn" onclick="enterPPT()" title="Præsentationstilstand (F)">⛶ Præsenter</button>
@@ -1421,7 +1464,7 @@ function erEndeligLaast(id, uddId, grpNr) {
 
 // ── RENDERING ─────────────────────────────────────────────────
 function avatarHTML(entry, grpNr, uddId, opts={}) {
-  if (entry.tom) return `<div class="tom-plads">🪑</div>`.repeat(entry.tom);
+  if (entry.tom) { const nyKls = entry.ny ? ' ny-plads' : ''; return `<div class="tom-plads${nyKls}">🪑</div>`.repeat(entry.tom); }
   const info = ansInfo(entry.id);
   const vilRykke = (opts.vilRykkeIds?.has(entry.id) && entry.status==='uændret') ? 'vil-rykke' : '';
   const cls = `avatar ans-${entry.id} ${entry.status||''} ${vilRykke}`;
@@ -1586,16 +1629,22 @@ function buildIntro() {
   }).join('');
 
   return `
-    <div class="intro-sektion-hdr">
-      <h2>KOT-Fordeling · Udbud</h2>
-      <span style="margin-left:auto;font-size:0.8rem;color:#63b3ed;">Trin 1 / ${SLIDES.length}</span>
-    </div>
-    <div class="udd-kort-sektion">${uddKort}</div>
-    <div class="intro-sektion-hdr">
-      <h2>KOT-Fordeling · Ansøgere</h2>
-    </div>
-    <div class="slide-body" style="overflow:auto;background:#f8fafc;">
-      <div class="kartotek-grid">${cards}</div>
+    <div class="intro-layout">
+      <div class="intro-col-udbud">
+        <div class="intro-sektion-hdr">
+          <h2>KOT-Fordeling · Udbud</h2>
+          <span style="margin-left:auto;font-size:0.8rem;color:#63b3ed;">Trin 1 / ${SLIDES.length}</span>
+        </div>
+        <div class="udd-kort-sektion">${uddKort}</div>
+      </div>
+      <div class="intro-col-kartotek">
+        <div class="intro-sektion-hdr">
+          <h2>KOT-Fordeling · Ansøgere</h2>
+        </div>
+        <div class="slide-body" style="overflow:auto;background:#f8fafc;">
+          <div class="kartotek-grid">${cards}</div>
+        </div>
+      </div>
     </div>`;
 }
 
@@ -1650,15 +1699,16 @@ function buildSlide(s) {
       const entries = ud.slots?.[grp.nr] || [];
       // effectiveKv: stort datasæt → kun top-kv dublets vises; lille → alle dublets
       const effectiveKv = ANSØGERE.length > 26 ? kv : entries.length;
+      const badge   = ud.badges?.[grp.nr];
+      const nyPlads = s.slideType === 'pladsflyt' && badge?.startsWith('+');
       const slotsHTML = (ANSØGERE.length > 26 && s.slideType === 'midlertidig')
         ? midlertidigSlotHTML(entries, kv, grp.nr, ud.udbudId, vilRykkeIds)
         : s.slideType === 'clearing'
         ? clearingSlotHTML(entries, effectiveKv, grp.nr, ud.udbudId)
         : s.slideType === 'midlertidig'
         ? sortSlotEntries(entries, grp.nr).map(e=>avatarHTML(e,grp.nr,ud.udbudId,{vilRykkeIds})).join('')
-        : sortSlotEntries(entries, grp.nr).map(e=>avatarHTML(e,grp.nr,ud.udbudId)).join('');
+        : sortSlotEntries(entries, grp.nr).map(e=>avatarHTML(nyPlads&&e.tom?{...e,ny:true}:e,grp.nr,ud.udbudId)).join('');
 
-      const badge   = ud.badges?.[grp.nr];
       const gkvVal  = s.visStatus && ud.gkv?.[grp.nr];
       const koeValResult = s.slideType === 'result' ? (ud.koePerGrp?.[grp.nr] ?? 0) : 1;
       const isK1type = grp.nr === 10 || grp.nr === 60;
@@ -1851,7 +1901,14 @@ function buildSlide(s) {
     </div>
     ${modalHTML}
     <div class="slide-body">
-      <div class="edu-sections">${sections}</div>
+      <div class="edu-sections">${sections}${UDBUD.length < 4 ? `
+        <div class="edu-placeholder">
+          <div class="edu-placeholder-inner">
+            <div class="edu-placeholder-titel">Ny uddannelse på vej</div>
+            <div class="edu-placeholder-sub">Åbner snart!</div>
+            <div class="edu-placeholder-tekst">Vi arbejder på at tilføje endnu en spændende uddannelse til KOT-fordelingen.</div>
+          </div>
+        </div>` : ''}</div>
       ${rejectedHTML}
       ${legendeHTML(s.legende)}
       ${ikkeBar}
@@ -1865,6 +1922,11 @@ let SLIDES = [];
 
 // ── PRÆSENTATIONSTILSTAND ─────────────────────────────────
 let pptMode = false;
+
+function toggleLayout() {
+  document.body.classList.toggle('layout-h');
+  if (pptMode) setTimeout(scalePPT, 50);
+}
 
 function enterPPT() {
   pptMode = true;
