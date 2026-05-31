@@ -357,11 +357,21 @@ body {
 }
 .tom-plads.ny-plads {
   opacity:0.75;
-  animation: nyPladsGlow 2s ease-in-out infinite;
+  position:relative;
 }
-@keyframes nyPladsGlow {
-  0%,100% { filter:drop-shadow(0 0 2px #c4b5fd); }
-  50%      { filter:drop-shadow(0 0 5px #a78bfa); }
+.tom-plads.ny-plads::after {
+  content:'NY!';
+  position:absolute;
+  top:-7px; right:-7px;
+  background:#7c3aed;
+  color:#fff;
+  font-size:0.38rem;
+  font-weight:900;
+  letter-spacing:0.03em;
+  padding:1px 3px;
+  border-radius:3px;
+  line-height:1.4;
+  pointer-events:none;
 }
 
 /* ── AFVISTE ──────────────────────────────────────────── */
