@@ -739,12 +739,13 @@ body {
   }
   .stabil-truck {
     font-size: 3.5rem; line-height: 1;
+    transform: scaleX(-1);
     animation: truckDrive 0.8s ease 0.3s both;
   }
   @keyframes truckDrive {
-    from { transform: translateX(-120px); opacity: 0; }
-    80%  { transform: translateX(8px); opacity: 1; }
-    to   { transform: translateX(0); opacity: 1; }
+    from { transform: scaleX(-1) translateX(120px); opacity: 0; }
+    80%  { transform: scaleX(-1) translateX(-8px); opacity: 1; }
+    to   { transform: scaleX(-1) translateX(0); opacity: 1; }
   }
   .stabil-stop {
     display: inline-flex; align-items: center; justify-content: center;
@@ -1923,10 +1924,10 @@ function animerStabil() {
   overlay.className = 'stabil-overlay';
   overlay.innerHTML = `
     <div class="stabil-scene">
-      <span class="stabil-truck">🚛</span>
       <span class="stabil-stop">
         <span class="stop-tegn">STOP</span>
       </span>
+      <span class="stabil-truck">🚛</span>
     </div>
     <div class="stabil-tekst">Ikke flere pladser at flytte</div>`;
   slide.appendChild(overlay);
