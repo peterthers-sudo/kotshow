@@ -1602,7 +1602,8 @@ function buildSlide(s) {
 
       const badge   = ud.badges?.[grp.nr];
       const gkvVal  = s.visStatus && ud.gkv?.[grp.nr];
-      const gkvHTML = gkvVal
+      const koeValResult = s.slideType === 'result' ? (ud.koePerGrp?.[grp.nr] ?? 0) : 1;
+      const gkvHTML = (gkvVal && koeValResult > 0)
         ? `<span style="font-size:0.62rem;color:#64748b;margin-left:8px;">GK: <strong>${gkvVal}</strong></span>` : '';
 
       // Lodtrækning: K1-gruppe lukket, og første i kø har samme gns som GK
@@ -1643,8 +1644,10 @@ function buildSlide(s) {
         ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">Ansøgninger ialt: ${aktivEntries.length}</span>`;
       } else if (s.slideType === 'result') {
         const koeVal = ud.koePerGrp?.[grp.nr] ?? 0;
-        const koeTxt = koeVal > 0 ? `Ansøgere i kø: ${koeVal}` : 'Ingen kø';
-        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">${koeTxt}</span>`;
+        let koeTxt = '';
+        if (koeVal > 0) koeTxt = `Ansøgere i kø: ${koeVal}`;
+        else if (optCount2 >= kv) koeTxt = 'Alle optaget';
+        ekstraHTML = koeTxt ? `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">${koeTxt}</span>` : '';
       } else if (s.slideType === 'pladsflyt') {
         ekstraHTML = '';
       } else {
