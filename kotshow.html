@@ -661,6 +661,11 @@ body {
   body.ppt-mode .legend,
   body.ppt-mode .laas-legende { display: none !important; }
   body.ppt-mode .ikke-placeret-bar { padding: 3px 0; gap: 6px; }
+  .intro-layout { display:flex; flex-direction:column; }
+  .intro-col-udbud, .intro-col-kartotek { min-width:0; }
+  body.layout-h .intro-layout { flex-direction:row; gap:12px; align-items:start; height:100%; }
+  body.layout-h .intro-col-udbud { width:34%; flex-shrink:0; }
+  body.layout-h .intro-col-kartotek { flex:1; overflow:hidden; }
   body.layout-h .edu-sections {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1589,16 +1594,22 @@ function buildIntro() {
   }).join('');
 
   return `
-    <div class="intro-sektion-hdr">
-      <h2>KOT-Fordeling · Udbud</h2>
-      <span style="margin-left:auto;font-size:0.8rem;color:#63b3ed;">Trin 1 / ${SLIDES.length}</span>
-    </div>
-    <div class="udd-kort-sektion">${uddKort}</div>
-    <div class="intro-sektion-hdr">
-      <h2>KOT-Fordeling · Ansøgere</h2>
-    </div>
-    <div class="slide-body" style="overflow:auto;background:#f8fafc;">
-      <div class="kartotek-grid">${cards}</div>
+    <div class="intro-layout">
+      <div class="intro-col-udbud">
+        <div class="intro-sektion-hdr">
+          <h2>KOT-Fordeling · Udbud</h2>
+          <span style="margin-left:auto;font-size:0.8rem;color:#63b3ed;">Trin 1 / ${SLIDES.length}</span>
+        </div>
+        <div class="udd-kort-sektion">${uddKort}</div>
+      </div>
+      <div class="intro-col-kartotek">
+        <div class="intro-sektion-hdr">
+          <h2>KOT-Fordeling · Ansøgere</h2>
+        </div>
+        <div class="slide-body" style="overflow:auto;background:#f8fafc;">
+          <div class="kartotek-grid">${cards}</div>
+        </div>
+      </div>
     </div>`;
 }
 
