@@ -676,9 +676,7 @@ body {
 
   .intro-layout { display:flex; flex-direction:column; }
   .intro-col-udbud, .intro-col-kartotek { min-width:0; }
-  body.layout-h .intro-layout { flex-direction:row; gap:12px; align-items:start; height:100%; }
-  body.layout-h .intro-col-udbud { width:34%; flex-shrink:0; }
-  body.layout-h .intro-col-kartotek { flex:1; overflow:auto; min-width:0; }
+
   body.layout-h .edu-sections {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -943,7 +941,6 @@ const MOTIVATION = {
   <div class="ppt-nav-counter" id="pptCounter"></div>
   <button id="pptNextBtn" onclick="navigate(1)">→</button>
   <button onclick="toggleLayout()" class="ppt-layout-btn" id="pptLayoutBtn" title="Skift layout">⊞</button>
-  <button onclick="exitPPT()" class="ppt-exit-btn">✕ Afslut</button>
 </div>
 <nav class="nav">
   <button id="pptBtn" onclick="enterPPT()" title="Præsentationstilstand (F)">⛶ Præsenter</button>
