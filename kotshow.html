@@ -741,6 +741,19 @@ body {
   @keyframes stabilUd {
     to { opacity: 0; }
   }
+
+  /* ── FYRVÆRKERI (Endelig fordeling) ──────────────────── */
+  .fyrvk-particle {
+    position: fixed;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+  }
+  @keyframes fyrvkFly {
+    0%   { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+  }
 </style>
 </head>
 <body>
@@ -1781,6 +1794,56 @@ document.addEventListener('fullscreenchange', () => { if (!document.fullscreenEl
 
 
 
+
+function fyrvkeri() {
+  const colors = ['#f59e0b','#ef4444','#3b82f6','#10b981','#8b5cf6','#ec4899','#06b6d4','#f97316'];
+  const shapes = ['50%','3px'];
+  const cx = window.innerWidth/2, cy = window.innerHeight/2;
+  const N = 60;
+  for (let i = 0; i < N; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'fyrvk-particle';
+      const angle = (Math.random()*360) * Math.PI/180;
+      const dist  = 80 + Math.random()*220;
+      const dx = Math.cos(angle)*dist + (Math.random()-0.5)*60;
+      const dy = Math.sin(angle)*dist - Math.random()*100;
+      el.style.cssText = `
+        left:${cx + (Math.random()-0.5)*80}px;
+        top:${cy + (Math.random()-0.5)*40}px;
+        background:${colors[Math.floor(Math.random()*colors.length)]};
+        border-radius:${shapes[Math.random()<0.6?0:1]};
+        width:${5+Math.random()*7}px;
+        height:${5+Math.random()*7}px;
+        --dx:${dx}px; --dy:${dy}px;
+        animation: fyrvkFly ${0.8+Math.random()*0.8}s ease-out forwards;`;
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(), 1800);
+    }, Math.random()*600);
+  }
+  // Repeat once more for a double burst
+  setTimeout(() => {
+    for (let i = 0; i < 30; i++) {
+      setTimeout(() => {
+        const el = document.createElement('div');
+        el.className = 'fyrvk-particle';
+        const angle = (Math.random()*360)*Math.PI/180;
+        const dist  = 50 + Math.random()*180;
+        el.style.cssText = `
+          left:${cx + (Math.random()-0.5)*200}px;
+          top:${cy + (Math.random()-0.5)*80}px;
+          background:${colors[Math.floor(Math.random()*colors.length)]};
+          border-radius:50%;
+          width:${4+Math.random()*6}px; height:${4+Math.random()*6}px;
+          --dx:${Math.cos(angle)*dist}px; --dy:${Math.sin(angle)*dist-60}px;
+          animation: fyrvkFly ${0.7+Math.random()*0.7}s ease-out forwards;`;
+        document.body.appendChild(el);
+        setTimeout(()=>el.remove(), 1600);
+      }, Math.random()*400);
+    }
+  }, 900);
+}
+
 function animerStabil() {
   const slide = document.querySelector('.slide.active');
   if (!slide) return;
@@ -1791,7 +1854,7 @@ function animerStabil() {
       <span class="stabil-truck">🚛</span>
       <span class="stabil-stop">🛑</span>
     </div>
-    <div class="stabil-tekst">Ingen flere overførsler mulige</div>`;
+    <div class="stabil-tekst">Ikke flere pladser at flytte</div>`;
   slide.appendChild(overlay);
   setTimeout(() => {
     overlay.classList.add('fade-ud');
@@ -1875,6 +1938,7 @@ function goTo(n) {
   dots[current].classList.add('active');
   updateNav();
   if (pptMode) { setTimeout(scalePPT, 50); updatePPTNav(); }
+  if (SLIDES[current]?.visStatus) setTimeout(fyrvkeri, 400);
   const curSlide = SLIDES[current];
   if (curSlide?.slideType === 'pladsflyt') {
     const hasTransfers = curSlide.udbud?.some(u => u.badges && Object.keys(u.badges).length > 0);
