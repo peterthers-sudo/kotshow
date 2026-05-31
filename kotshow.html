@@ -127,15 +127,13 @@ body {
 
 /* ── ANIMATIONER ──────────────────────────────────────── */
 @keyframes dubletFadeOut {
-  0%   { opacity:1; transform:scale(1);    filter:none;           width:42px; min-width:42px; }
-  65%  { opacity:.2; transform:scale(.85); filter:grayscale(40%); width:42px; min-width:42px; }
-  100% { opacity:0;  transform:scale(0);   filter:grayscale(100%); width:0;  min-width:0; }
+  0%   { opacity:1; transform:scale(1); width:42px; min-width:42px; height:42px; }
+  75%  { opacity:0; transform:scale(1); width:42px; min-width:42px; height:42px; }
+  100% { opacity:0; transform:scale(0); width:0;    min-width:0;    height:0; }
 }
-.slide.active .avatar.dublet {
-  animation: dubletFadeOut 1.8s ease 0.5s both;
 }
 .avatar.dublet { opacity:0; transform:scale(0); width:0; min-width:0; height:0; flex-shrink:1; overflow:hidden; }
-
+.slide.active .avatar.dublet { animation: dubletFadeOut 2.2s ease 0.4s both; }
 @keyframes avatarFadeIn {
   from { opacity:0; transform:scale(0.7); }
   to   { opacity:1; transform:scale(1); }
@@ -1623,6 +1621,13 @@ function renderAll() {
 function goTo(n) {
   const slides = document.querySelectorAll('.slide');
   const dots   = document.querySelectorAll('.nav-dot');
+  // Stop dublet animation immediately so avatars dont blink during transition
+  slides[current].querySelectorAll('.avatar.dublet').forEach(el => {
+    el.style.animation = 'none';
+    el.style.opacity = '0';
+    el.style.width = '0';
+    el.style.height = '0';
+  });
   slides[current].classList.remove('active');
   dots[current].classList.remove('active');
   current = n;
