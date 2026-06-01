@@ -1971,7 +1971,7 @@ let pptSlideH = 0; // fast PPT-højde fra fixSlideSizes
 
 
 // ── PRÆSENTATIONSTILSTAND ─────────────────────────────────
-let pptMode = true;
+let pptMode = false;
 
 function toggleLayout() {
   document.body.classList.toggle('layout-h');
@@ -2015,13 +2015,7 @@ function exitPPT() {
   pptMode = false;
   document.body.classList.remove('ppt-mode');
   document.exitFullscreen?.().catch(()=>{});
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-  // Start i PPT-mode som default
-  document.body.classList.add('ppt-mode');
-  fixSlideSizes();
-  scalePPT();
-  updatePPTNav();
-}));
+  requestAnimationFrame(() => requestAnimationFrame(fixSlideSizes));
   
   const vp = document.getElementById('slideViewport');
   vp.style.transform = '';
