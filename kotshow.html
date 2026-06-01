@@ -1994,6 +1994,7 @@ function fixSlideSizes() {
 function enterPPT() {
   pptMode = true;
   document.body.classList.add('ppt-mode');
+  document.getElementById('slideViewport').style.minHeight = '';
   document.documentElement.requestFullscreen?.().catch(()=>{});
   scalePPT();
   updatePPTNav();
@@ -2003,6 +2004,7 @@ function exitPPT() {
   pptMode = false;
   document.body.classList.remove('ppt-mode');
   document.exitFullscreen?.().catch(()=>{});
+  requestAnimationFrame(() => requestAnimationFrame(fixSlideSizes));
   const vp = document.getElementById('slideViewport');
   vp.style.transform = '';
   vp.style.width = '';
