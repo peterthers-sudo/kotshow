@@ -2037,13 +2037,14 @@ function scalePPT() {
   // visualViewport giver præcise mål på iOS (ekskl. adresselinje)
   const vw = window.visualViewport?.width  || window.innerWidth;
   const vh = window.visualViewport?.height || window.innerHeight;
-  const nw = vp.offsetWidth  || 1024;
-  const nh = (pptMode && pptSlideH) ? pptSlideH : (vp.offsetHeight || 576);
-  const scale = Math.min(vw / nw, vh / nh) * 0.97;
+  const nw  = vp.offsetWidth  || 1024;
+  const nhNat = vp.offsetHeight || 576;            // naturlig slide-højde
+  const nhRef = (pptSlideH || nhNat);              // reference til scale (højeste slide)
+  const scale = Math.min(vw / nw, vh / nhRef) * 0.97;
   vp.style.width  = nw + 'px';
-  vp.style.height = nh + 'px';
+  vp.style.height = nhNat + 'px';                  // brug naturlig højde — ingen luft
   vp.style.left   = Math.round((vw - nw * scale) / 2) + 'px';
-  vp.style.top    = Math.round((vh - nh * scale) / 2) + 'px';
+  vp.style.top    = Math.round((vh - nhNat * scale) / 2) + 'px';
   vp.style.transformOrigin = 'top left';
   vp.style.transform = `scale(${scale})`;
 }
