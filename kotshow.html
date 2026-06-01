@@ -1667,11 +1667,33 @@ function buildIntro() {
   }).join('');
 
   return `
+    <div class="stat-modal-backdrop" id="introStatModal" onclick="if(event.target===this)lukStatModal('introStatModal')">
+      <div class="stat-modal">
+        <div class="stat-modal-header">
+          <h2>📊 Overblik</h2>
+          <button class="stat-modal-luk" onclick="lukStatModal('introStatModal')">✕</button>
+        </div>
+        <div class="stat-modal-body">
+          <table class="stat-tabel">
+            <tr><td>Antal uddannelser</td><td>${UDBUD.length}</td></tr>
+            <tr><td>Antal ansøgere i alt</td><td>${ANSØGERE.length}</td></tr>
+          </table>
+          <table class="stat-tabel" style="margin-top:14px;">
+            <thead><tr><th>Uddannelse</th><th>Antal pladser</th></tr></thead>
+            <tbody>${UDBUD.map(u=>{
+              const pladser = u.grupper.filter(g=>g.nr===10||g.nr===20).reduce((s,g)=>s+(g.kap||0),0);
+              return `<tr><td>${u.navn}</td><td>${pladser}</td></tr>`;
+            }).join('')}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
     <div class="intro-layout">
       <div class="intro-col-udbud">
         <div class="intro-sektion-hdr">
           <h2>KOT-Fordeling · Udbud</h2>
           <span style="margin-left:auto;font-size:0.8rem;color:#63b3ed;">Trin 1 / ${SLIDES.length}</span>
+          <button class="stat-knap" onclick="visStatModal('introStatModal')" style="margin-left:8px;">📊 Statistik</button>
         </div>
         <div class="udd-kort-sektion">${uddKort}</div>
       </div>
