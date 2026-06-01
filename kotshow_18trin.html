@@ -144,6 +144,68 @@ body {
   animation: avatarFadeIn 1.2s ease 0.3s both;
 }
 
+/* ── CLEARING-OVERGANG · 3-trins pædagogisk sekvens ───────────
+   Aktiveres ved at JS tilføjer .slide-clearing-active på den
+   UDGÅENDE midlertidig-slide. Al timing styres via CSS-delays,
+   så vi undgår tunge JS-timeouts. Trin C (glidning) håndteres
+   som en FLIP-transition i goTo().                              */
+
+/* Stage A — Frys & fremhæv:
+   stabile (uændrede) pladser, gruppe-headere og noten dæmpes,
+   så de usikre (gule) og ledige pladser står skarpt.            */
+.slide.slide-clearing-active .avatar.uændret {
+  opacity: 0.42;
+  filter: grayscale(0.65) brightness(0.95);
+  transition: opacity 0.4s ease, filter 0.4s ease;
+}
+.slide.slide-clearing-active .group-row-header,
+.slide.slide-clearing-active .slide-note,
+.slide.slide-clearing-active .ikke-placeret-bar {
+  opacity: 0.5;
+  transition: opacity 0.4s ease;
+}
+
+/* De usikre gule pladser + ledige pladser løftes frem (Stage A),
+   og får et glidende skift af ramme-/glødfarve (Stage B).
+   outline-color + box-shadow har 1.0s delay, så de først glider
+   til lilla EFTER pulsen — jf. "pulsér, dernæst glid til lilla". */
+.slide.slide-clearing-active .avatar.midlertidig,
+.slide.slide-clearing-active .tom-plads {
+  transition: outline-color 0.45s ease 1.0s,
+              box-shadow    0.45s ease 1.0s,
+              filter        0.35s ease;
+}
+
+/* Stage B — Frigørelse: pulserende ustabilitet i den gule ramme … */
+@keyframes pulse {
+  0%, 100% { transform: scale(1);    }
+  50%      { transform: scale(1.13); }
+}
+.slide.slide-clearing-active .avatar.midlertidig {
+  filter: saturate(1.15) brightness(1.05);
+  animation: pulse 0.5s ease 0.2s 2;            /* to throbs = ustabilitet */
+  outline-color: var(--status-pladsflyt);       /* … dernæst glid gul → lilla (via delay) */
+  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.1),
+              0 0 0 3px rgba(107,70,193,0.40);   /* lilla glød = frigjort til clearing */
+}
+.slide.slide-clearing-active .tom-plads {
+  animation: pulse 0.5s ease 0.35s 2;
+  box-shadow: 0 0 0 3px rgba(107,70,193,0.40);
+}
+
+/* Stage C — nye ankomne avatarer på clearing-sliden (dem der ikke
+   fandtes på midlertidig-sliden) fader blødt ind i stedet for at
+   poppe. Eksisterende avatarer glider via FLIP (sat i JS).        */
+@keyframes avatarClearingIn {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: scale(1);   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide.slide-clearing-active .avatar.midlertidig,
+  .slide.slide-clearing-active .tom-plads { animation: none; }
+}
+
 /* ── SLIDE HEADER ─────────────────────────────────────── */
 .slide-header {
   background: var(--bg-header);
@@ -1631,9 +1693,36 @@ function buildIntro() {
   return `
     <div class="intro-layout">
       <div class="intro-col-udbud">
+        <div class="stat-modal-backdrop" id="introStatModal" onclick="if(event.target===this)lukStatModal('introStatModal')">
+          <div class="stat-modal">
+            <div class="stat-modal-header">
+              <h2>📊 Overblik</h2>
+              <button class="stat-modal-luk" onclick="lukStatModal('introStatModal')">✕</button>
+            </div>
+            <div class="stat-modal-body">
+              <table class="stat-tabel">
+                <tbody>${(()=>{
+                  let sumP=0, sumA=0;
+                  const rows = UDBUD.map(u=>{
+                    const p = u.grupper.filter(g=>g.nr===10||g.nr===20).reduce((s,g)=>s+(g.kap||0),0);
+                    const a = ANSØGERE.filter(x=>x.ansøgninger.some(ans=>ans.udbud===u.id)).length;
+                    sumP+=p; sumA+=a;
+                    return `<tr><td style="text-align:left">${u.navn}</td><td style="text-align:right">${p}</td><td style="text-align:right">${a}</td></tr>`;
+                  }).join('');
+                  return `<tr style="color:#64748b;"><td style="text-align:left">Antal uddannelser</td><td></td><td style="text-align:right">${UDBUD.length}</td></tr>`
+                    + `<tr style="color:#64748b;border-bottom:2px solid #e2e8f0;"><td style="text-align:left">Antal ansøgere i alt</td><td></td><td style="text-align:right">${ANSØGERE.length}</td></tr>`
+                    + `<tr style="font-weight:700;color:#0f172a;"><td style="text-align:left">Uddannelse</td><td style="text-align:right">Pladser</td><td style="text-align:right">Ansøgninger</td></tr>`
+                    + rows
+                    + `<tr style="font-weight:700;border-top:1px solid #e2e8f0;"><td style="text-align:left">Ialt</td><td style="text-align:right">${sumP}</td><td style="text-align:right">${sumA}</td></tr>`;
+                })()}</tbody>
+              </table>
+            </div>
+          </div>
+        </div>
         <div class="intro-sektion-hdr">
           <h2>KOT-Fordeling · Udbud</h2>
           <span style="margin-left:auto;font-size:0.8rem;color:#63b3ed;">Trin 1 / ${SLIDES.length}</span>
+          <button class="stat-knap" onclick="visStatModal('introStatModal')" style="margin-left:8px;">📊 Statistik</button>
         </div>
         <div class="udd-kort-sektion">${uddKort}</div>
       </div>
@@ -2112,21 +2201,30 @@ function renderAll() {
   updateNav();
 }
 
-function goTo(n) {
+function prefersReducedMotion() {
+  return !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+}
+
+// Aktiverer slide n + kører de slide-type-specifikke entry-animationer.
+// stopDublet=false bruges under clearing-overgangen, så dublet-avatarerne
+// får lov at fade ud som en del af selve clearingen.
+function commitSlide(n, { stopDublet = true } = {}) {
   const slides = document.querySelectorAll('.slide');
   const dots   = document.querySelectorAll('.nav-dot');
-  // Stop dublet animation immediately so avatars dont blink during transition
-  slides[current].querySelectorAll('.avatar.dublet').forEach(el => {
-    el.style.animation = 'none';
-    el.style.opacity = '0';
-    el.style.width = '0';
-    el.style.height = '0';
-  });
-  slides[current].classList.remove('active');
-  dots[current].classList.remove('active');
+  if (stopDublet) {
+    // Stop dublet animation immediately so avatars dont blink during transition
+    slides[current].querySelectorAll('.avatar.dublet').forEach(el => {
+      el.style.animation = 'none';
+      el.style.opacity = '0';
+      el.style.width = '0';
+      el.style.height = '0';
+    });
+  }
+  slides[current].classList.remove('active', 'slide-clearing-active');
+  dots[current]?.classList.remove('active');
   current = n;
   slides[current].classList.add('active');
-  dots[current].classList.add('active');
+  dots[current]?.classList.add('active');
   updateNav();
   if (pptMode) { setTimeout(scalePPT, 50); updatePPTNav(); }
   if (SLIDES[current]?.visStatus) setTimeout(fyrvkeri, 400);
@@ -2136,6 +2234,107 @@ function goTo(n) {
     if (hasTransfers) setTimeout(animerPladsflyt, 150);
     else setTimeout(animerStabil, 400);
   }
+}
+
+function goTo(n) {
+  if (n === current) return;
+  const fromType = SLIDES[current]?.slideType;
+  const toType   = SLIDES[n]?.slideType;
+  // Kun den fremadrettede, tilstødende overgang midlertidig → clearing
+  // får den pædagogiske 3-trins sekvens. Alt andet skifter direkte.
+  const erClearingOvergang =
+        n === current + 1 &&
+        fromType === 'midlertidig' &&
+        toType === 'clearing';
+
+  if (erClearingOvergang && !prefersReducedMotion()) {
+    runClearingTransition(current, n);
+  } else {
+    commitSlide(n);
+  }
+}
+
+// ── CLEARING-OVERGANG (3 mikro-stadier) ───────────────────────
+// Stage A + B kører via CSS-klassen .slide-clearing-active på den
+// udgående midlertidig-slide. Stage C er en FLIP-animation, der
+// lader overlevende avatarer glide fysisk til deres nye placering.
+const CLEARING_AB_MS = 1500;   // varighed af Stage A+B før clearing-sliden tager over
+
+function avatarId(el) {
+  const m = el.className.match(/\bans-([A-Za-z]+)\b/);
+  return m ? m[1] : null;
+}
+
+// Måler skærmpositioner for hver placeret avatar (pr. ansøger-id).
+function avatarPosMap(slide) {
+  const map = new Map();
+  slide.querySelectorAll('.group-row-slots .avatar:not(.dublet)').forEach(el => {
+    const id = avatarId(el);
+    if (id) map.set(id, el.getBoundingClientRect());
+  });
+  return map;
+}
+
+function runClearingTransition(fromIdx, toIdx) {
+  const slides    = document.querySelectorAll('.slide');
+  const fromSlide = slides[fromIdx];
+  const toSlide   = slides[toIdx];
+
+  // Stage A (frys & fremhæv) + Stage B (pulsér gul → glid til lilla)
+  // udløses udelukkende af denne klasse; timingen ligger i CSS-delays.
+  fromSlide.classList.add('slide-clearing-active');
+
+  setTimeout(() => {
+    // Hvis brugeren har navigeret videre imens, droppes den forsinkede
+    // overgang (commitSlide har allerede ryddet .slide-clearing-active).
+    if (current !== fromIdx) return;
+
+    // ── FLIP · "First": mål gamle positioner mens midlertidig-sliden
+    //    stadig er aktiv. Kompensér for evt. PPT-skalering af viewporten.
+    const vp     = document.getElementById('slideViewport');
+    const vpRect = vp.getBoundingClientRect();
+    const scale  = (vpRect.width / vp.offsetWidth) || 1;
+    const gamlePos = avatarPosMap(fromSlide);
+
+    // Skift til clearing-sliden (lad dens dublet-avatarer fade ud).
+    commitSlide(toIdx, { stopDublet: false });
+
+    // ── FLIP · "Last" + "Invert" + "Play"
+    toSlide.querySelectorAll('.group-row-slots .avatar:not(.dublet)').forEach(el => {
+      const id = avatarId(el);
+
+      // Ny ankomst på clearing-sliden → blød fade-in i stedet for pop.
+      if (!id || !gamlePos.has(id)) {
+        el.style.animation = 'avatarClearingIn 0.5s ease 0.15s both';
+        return;
+      }
+
+      const o = gamlePos.get(id);
+      const r = el.getBoundingClientRect();
+      const dx = (o.left - r.left) / scale;
+      const dy = (o.top  - r.top)  / scale;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;  // stod stille → ingen glidning
+
+      // Invert: placér avataren tilbage på sin gamle plads …
+      el.style.transition = 'none';
+      el.style.transform  = `translate(${dx}px, ${dy}px)`;
+      el.style.zIndex     = '5';
+
+      // Play: glid blødt på plads.
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        el.style.transition = 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+        el.style.transform  = 'translate(0, 0)';
+      }));
+
+      el.addEventListener('transitionend', function rydOp(ev) {
+        if (ev.propertyName !== 'transform') return;
+        el.style.transition = '';
+        el.style.transform  = '';
+        el.style.zIndex     = '';
+        el.removeEventListener('transitionend', rydOp);
+      });
+    });
+  }, CLEARING_AB_MS);
 }
 function navigate(dir) { const n=current+dir; if(n>=0&&n<SLIDES.length) goTo(n); }
 function updateNav() {
