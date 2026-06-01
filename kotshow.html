@@ -1984,7 +1984,8 @@ function fixSlideSizes() {
   tmpStyle.textContent = '#slideViewport .slide { display:block !important; position:absolute !important; left:-9999px !important; visibility:hidden !important; top:0 !important; }';
   document.head.appendChild(tmpStyle);
   let maxH = 0;
-  document.querySelectorAll('.slide').forEach(s => {
+  // Spring intro-sliden over (første slide) — den er unaturlig høj
+  document.querySelectorAll('.slide:not(:first-child)').forEach(s => {
     maxH = Math.max(maxH, s.scrollHeight);
   });
   document.head.removeChild(tmpStyle);
@@ -1995,8 +1996,9 @@ function enterPPT() {
   pptMode = true;
   document.body.classList.add('ppt-mode');
   document.documentElement.requestFullscreen?.().catch(()=>{});
-  // Mål slides i PPT-layout og sæt fast højde, derefter skalér
-  requestAnimationFrame(() => { fixSlideSizes(); scalePPT(); updatePPTNav(); });
+  fixSlideSizes();
+  scalePPT();
+  updatePPTNav();
 }
 
 function exitPPT() {
