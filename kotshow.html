@@ -1679,16 +1679,16 @@ function buildIntro() {
             <tr><td>Antal ansøgere i alt</td><td>${ANSØGERE.length}</td></tr>
           </table>
           <table class="stat-tabel" style="margin-top:14px;">
-            <thead><tr><th>Uddannelse</th><th>Pladser</th><th>Ansøgninger</th></tr></thead>
+            <thead><tr><th>Uddannelse</th><th style="text-align:right">Pladser</th><th style="text-align:right">Ansøgninger</th></tr></thead>
             <tbody>${(()=>{
               let sumP=0, sumA=0;
               const rows = UDBUD.map(u=>{
                 const p = u.grupper.filter(g=>g.nr===10||g.nr===20).reduce((s,g)=>s+(g.kap||0),0);
                 const a = ANSØGERE.filter(x=>x.ansøgninger.some(ans=>ans.udbud===u.id)).length;
                 sumP+=p; sumA+=a;
-                return `<tr><td>${u.navn}</td><td>${p}</td><td>${a}</td></tr>`;
+                return `<tr><td>${u.navn}</td><td style="text-align:right">${p}</td><td style="text-align:right">${a}</td></tr>`;
               }).join('');
-              return rows + `<tr style="font-weight:700;border-top:1px solid #e2e8f0;"><td>Ialt</td><td>${sumP}</td><td>${sumA}</td></tr>`;
+              return rows + `<tr style="font-weight:700;border-top:1px solid #e2e8f0;"><td>Ialt</td><td style="text-align:right">${sumP}</td><td style="text-align:right">${sumA}</td></tr>`;
             })()}</tbody>
           </table>
         </div>
