@@ -1,17 +1,3 @@
-function fixSlideSizes() {
-  // Mål alle slides off-screen og sæt en fast min-height på viewport
-  const vp = document.getElementById('slideViewport');
-  const tmpStyle = document.createElement('style');
-  tmpStyle.id = 'tmp-measure';
-  tmpStyle.textContent = '#slideViewport .slide { display:block !important; position:absolute !important; left:-9999px !important; visibility:hidden !important; top:0 !important; }';
-  document.head.appendChild(tmpStyle);
-  let maxH = 0;
-  document.querySelectorAll('.slide').forEach(s => {
-    maxH = Math.max(maxH, s.scrollHeight);
-  });
-  document.head.removeChild(tmpStyle);
-  if (maxH > 0) vp.style.minHeight = maxH + 'px';
-}
 ﻿<!DOCTYPE html>
 <html lang="da">
 <head>
@@ -334,8 +320,8 @@ body {
 }
 .kap-badge { font-size: 0.65rem; color: #64748b; font-weight: 600; }
 .kap-badge-right { margin-left: auto; }
-.plus-badge { background:#6b46c1; color:#fff; border-radius:3px; padding:0 4px; font-size:0.55rem; font-weight:700; margin-left:auto; line-height:1.6; align-self:center; }
-.minus-badge { background:#c53030; color:#fff; border-radius:3px; padding:0 4px; font-size:0.55rem; font-weight:700; margin-left:auto; line-height:1.6; align-self:center; }
+.plus-badge { background:#6b46c1; color:#fff; border-radius:4px; padding:1px 5px; font-size:0.65rem; font-weight:600; margin-left:auto; }
+.minus-badge { background:#c53030; color:#fff; border-radius:4px; padding:1px 5px; font-size:0.65rem; font-weight:600; margin-left:auto; }
 .group-header .header-icon { font-size:0.9rem; vertical-align:middle; }
 
 /* ── AVATARER ─────────────────────────────────────────── */
@@ -641,7 +627,7 @@ body {
   /* ── UDDANNELSES-KORT (intro top) ──────────────────────── */
   .udd-kort-sektion {
     display: flex; gap: 14px;
-    padding: 14px 28px 10px;
+    padding: 14px 20px 10px;
     background: #f0f4f8;
     border-bottom: 2px solid #e2e8f0;
     flex-shrink: 0;
@@ -752,14 +738,13 @@ body {
   .edu-placeholder-sub { font-size:0.8rem; font-weight:700; color:#7c3aed; margin-bottom:8px; letter-spacing:0.05em; }
   .edu-placeholder-tekst { font-size:0.65rem; color:#94a3b8; max-width:220px; line-height:1.5; }
   .intro-layout { display:flex; flex-direction:column; }
-  .intro-col-udbud, .intro-col-kartotek { min-width:0; width:100%; }
+  .intro-col-udbud, .intro-col-kartotek { min-width:0; }
 
   body.layout-h .edu-sections {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
     align-items: start;
-    align-content: start;
   }
   body.ppt-mode .ikke-placeret-label { font-size: 0.6rem; }
   body.ppt-mode .ikke-placeret-slots { gap: 3px; }
@@ -1682,43 +1667,49 @@ function buildIntro() {
   }).join('');
 
   return `
-    <div class="stat-modal-backdrop" id="introStatModal" onclick="if(event.target===this)lukStatModal('introStatModal')">
-      <div class="stat-modal">
-        <div class="stat-modal-header">
-          <h2>📊 Overblik</h2>
-          <button class="stat-modal-luk" onclick="lukStatModal('introStatModal')">✕</button>
+    <div class="intro-layout">
+      <div class="intro-col-udbud">
+        <div class="stat-modal-backdrop" id="introStatModal" onclick="if(event.target===this)lukStatModal('introStatModal')">
+          <div class="stat-modal">
+            <div class="stat-modal-header">
+              <h2>📊 Overblik</h2>
+              <button class="stat-modal-luk" onclick="lukStatModal('introStatModal')">✕</button>
+            </div>
+            <div class="stat-modal-body">
+              <table class="stat-tabel">
+                <tbody>${(()=>{
+                  let sumP=0, sumA=0;
+                  const rows = UDBUD.map(u=>{
+                    const p = u.grupper.filter(g=>g.nr===10||g.nr===20).reduce((s,g)=>s+(g.kap||0),0);
+                    const a = ANSØGERE.filter(x=>x.ansøgninger.some(ans=>ans.udbud===u.id)).length;
+                    sumP+=p; sumA+=a;
+                    return `<tr><td style="text-align:left">${u.navn}</td><td style="text-align:right">${p}</td><td style="text-align:right">${a}</td></tr>`;
+                  }).join('');
+                  return `<tr style="color:#64748b;"><td style="text-align:left">Antal uddannelser</td><td></td><td style="text-align:right">${UDBUD.length}</td></tr>`
+                    + `<tr style="color:#64748b;border-bottom:2px solid #e2e8f0;"><td style="text-align:left">Antal ansøgere i alt</td><td></td><td style="text-align:right">${ANSØGERE.length}</td></tr>`
+                    + `<tr style="font-weight:700;color:#0f172a;"><td style="text-align:left">Uddannelse</td><td style="text-align:right">Pladser</td><td style="text-align:right">Ansøgninger</td></tr>`
+                    + rows
+                    + `<tr style="font-weight:700;border-top:1px solid #e2e8f0;"><td style="text-align:left">Ialt</td><td style="text-align:right">${sumP}</td><td style="text-align:right">${sumA}</td></tr>`;
+                })()}</tbody>
+              </table>
+            </div>
+          </div>
         </div>
-        <div class="stat-modal-body">
-          <table class="stat-tabel">
-            <tbody>${(()=>{
-              let sumP=0, sumA=0;
-              const rows = UDBUD.map(u=>{
-                const p = u.grupper.filter(g=>g.nr===10||g.nr===20).reduce((s,g)=>s+(g.kap||0),0);
-                const a = ANSØGERE.filter(x=>x.ansøgninger.some(ans=>ans.udbud===u.id)).length;
-                sumP+=p; sumA+=a;
-                return `<tr><td style="text-align:left">${u.navn}</td><td style="text-align:right">${p}</td><td style="text-align:right">${a}</td></tr>`;
-              }).join('');
-              return `<tr style="color:#64748b;"><td style="text-align:left">Antal uddannelser</td><td></td><td style="text-align:right">${UDBUD.length}</td></tr>`
-                + `<tr style="color:#64748b;border-bottom:2px solid #e2e8f0;"><td style="text-align:left">Antal ansøgere i alt</td><td></td><td style="text-align:right">${ANSØGERE.length}</td></tr>`
-                + `<tr style="font-weight:700;color:#0f172a;"><td style="text-align:left">Uddannelse</td><td style="text-align:right">Pladser</td><td style="text-align:right">Ansøgninger</td></tr>`
-                + rows
-                + `<tr style="font-weight:700;border-top:1px solid #e2e8f0;"><td style="text-align:left">Ialt</td><td style="text-align:right">${sumP}</td><td style="text-align:right">${sumA}</td></tr>`;
-            })()}</tbody>
-          </table>
+        <div class="intro-sektion-hdr">
+          <h2>KOT-Fordeling · Udbud</h2>
+          <span style="margin-left:auto;font-size:0.8rem;color:#63b3ed;">Trin 1 / ${SLIDES.length}</span>
+          <button class="stat-knap" onclick="visStatModal('introStatModal')" style="margin-left:8px;">📊 Statistik</button>
+        </div>
+        <div class="udd-kort-sektion">${uddKort}</div>
+      </div>
+      <div class="intro-col-kartotek">
+        <div class="intro-sektion-hdr">
+          <h2>KOT-Fordeling · Ansøgere</h2>
+        </div>
+        <div class="slide-body" style="overflow:auto;background:#f8fafc;">
+          <div class="kartotek-grid">${cards}</div>
         </div>
       </div>
-    </div>
-    <div class="intro-sektion-hdr">
-      <h2>KOT-Fordeling · Udbud</h2>
-      <span style="margin-left:auto;font-size:0.8rem;color:#63b3ed;">Trin 1 / ${SLIDES.length}</span>
-      <button class="stat-knap" onclick="visStatModal('introStatModal')" style="margin-left:8px;">📊 Statistik</button>
-    </div>
-    <div class="udd-kort-sektion">${uddKort}</div>
-    <div class="intro-sektion-hdr">
-      <h2>KOT-Fordeling · Ansøgere</h2>
-    </div>
-    <div class="slide-body" style="overflow:auto;background:#f8fafc;">
-      <div class="kartotek-grid">${cards}</div>
     </div>`;
 }
 
@@ -1876,7 +1867,18 @@ function buildSlide(s) {
       </div>`;
   }).join('');
 
-  const rejectedHTML = '';
+  let rejectedHTML = '';
+  if (s.afviste?.length) {
+    const avatars = s.afviste.map(id=>{
+      const info = ansInfo(id);
+      return `<div class="avatar ans-${id} afvist" title="${info?.navn||id}">${id}</div>`;
+    }).join('');
+    rejectedHTML = `
+      <div class="rejected-box">
+        <div class="rejected-header">Ansøgere uden tilbud</div>
+        <div class="rejected-slots">${avatars}</div>
+      </div>`;
+  }
 
   // Beregn hvem der ikke har sikker plads på dette trin
   const placeredeIds = new Set();
@@ -1991,22 +1993,6 @@ function toggleLayout() {
   if (pptMode) setTimeout(scalePPT, 50);
 }
 
-function fixSlideSizes() {
-  const vp = document.getElementById('slideViewport');
-  const vpW = (pptMode && window.screen?.width) ? window.screen.width : (vp.offsetWidth || window.innerWidth);
-  // Mål slides med korrekt bredde (inset:0 + left:-9999 giver forkert bred slide)
-  const tmpStyle = document.createElement('style');
-  tmpStyle.textContent = `#slideViewport .slide { display:block !important; position:fixed !important; left:-9999px !important; top:0 !important; width:${vpW}px !important; visibility:hidden !important; }`;
-  document.head.appendChild(tmpStyle);
-  let maxH = 0;
-  // Spring intro-sliden over (første slide)
-  document.querySelectorAll('.slide:not(:first-child)').forEach(s => {
-    maxH = Math.max(maxH, s.scrollHeight);
-  });
-  document.head.removeChild(tmpStyle);
-  if (maxH > 0) vp.style.minHeight = maxH + 'px';
-}
-
 function enterPPT() {
   pptMode = true;
   document.body.classList.add('ppt-mode');
@@ -2019,7 +2005,6 @@ function exitPPT() {
   pptMode = false;
   document.body.classList.remove('ppt-mode');
   document.exitFullscreen?.().catch(()=>{});
-
   const vp = document.getElementById('slideViewport');
   vp.style.transform = '';
   vp.style.width = '';
@@ -2031,11 +2016,13 @@ function exitPPT() {
 function scalePPT() {
   if (!pptMode) return;
   const vp = document.getElementById('slideViewport');
+  // Reset for measurement
   vp.style.transform = '';
   vp.style.width = '';
   vp.style.height = '';
   vp.style.left = '0';
   vp.style.top = '0';
+  // visualViewport giver præcise mål på iOS (ekskl. adresselinje)
   const vw = window.visualViewport?.width  || window.innerWidth;
   const vh = window.visualViewport?.height || window.innerHeight;
   const nw = vp.offsetWidth  || 1024;
@@ -2378,7 +2365,6 @@ ANSØGERE.forEach(a => a._rang = Math.random());
 const DA_STATES = runDA();
 SLIDES = generateSlides(DA_STATES);
 renderAll();
-requestAnimationFrame(() => requestAnimationFrame(fixSlideSizes));
 
 // Log resultat til konsollen
 console.log('DA-resultat:', DA_STATES[DA_STATES.length-1]);
