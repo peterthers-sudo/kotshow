@@ -745,6 +745,7 @@ body {
     grid-template-columns: 1fr 1fr;
     gap: 10px;
     align-items: start;
+    align-content: start;
   }
   body.ppt-mode .ikke-placeret-label { font-size: 0.6rem; }
   body.ppt-mode .ikke-placeret-slots { gap: 3px; }
@@ -1970,7 +1971,7 @@ let pptSlideH = 0; // fast PPT-højde fra fixSlideSizes
 
 
 // ── PRÆSENTATIONSTILSTAND ─────────────────────────────────
-let pptMode = false;
+let pptMode = true;
 
 function toggleLayout() {
   document.body.classList.toggle('layout-h');
@@ -2015,12 +2016,11 @@ function exitPPT() {
   document.body.classList.remove('ppt-mode');
   document.exitFullscreen?.().catch(()=>{});
   requestAnimationFrame(() => requestAnimationFrame(() => {
-  // Mål i PPT-kontekst først → sætter pptSlideH korrekt
+  // Start i PPT-mode som default
   document.body.classList.add('ppt-mode');
   fixSlideSizes();
-  document.body.classList.remove('ppt-mode');
-  // Mål derefter i normal-kontekst → sætter min-height til responsive
-  fixSlideSizes();
+  scalePPT();
+  updatePPTNav();
 }));
   
   const vp = document.getElementById('slideViewport');
