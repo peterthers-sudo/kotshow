@@ -1978,13 +1978,18 @@ function toggleLayout() {
 }
 
 function fixSlideSizes() {
-  // Inactive slides er position:absolute;inset:0 — korrekt bredde, kan måles direkte
   const vp = document.getElementById('slideViewport');
+  const vpW = vp.offsetWidth || window.innerWidth;
+  // Mål slides med korrekt bredde (inset:0 + left:-9999 giver forkert bred slide)
+  const tmpStyle = document.createElement('style');
+  tmpStyle.textContent = `#slideViewport .slide { display:block !important; position:fixed !important; left:-9999px !important; top:0 !important; width:${vpW}px !important; visibility:hidden !important; }`;
+  document.head.appendChild(tmpStyle);
   let maxH = 0;
   // Spring intro-sliden over (første slide)
   document.querySelectorAll('.slide:not(:first-child)').forEach(s => {
     maxH = Math.max(maxH, s.scrollHeight);
   });
+  document.head.removeChild(tmpStyle);
   if (maxH > 0) {
     if (pptMode) {
       pptSlideH = maxH;          // bruges af scalePPT
