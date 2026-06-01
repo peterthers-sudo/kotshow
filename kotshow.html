@@ -1979,7 +1979,7 @@ function toggleLayout() {
 
 function fixSlideSizes() {
   const vp = document.getElementById('slideViewport');
-  const vpW = vp.offsetWidth || window.innerWidth;
+  const vpW = (pptMode && window.screen?.width) ? window.screen.width : (vp.offsetWidth || window.innerWidth);
   // Mål slides med korrekt bredde (inset:0 + left:-9999 giver forkert bred slide)
   const tmpStyle = document.createElement('style');
   tmpStyle.textContent = `#slideViewport .slide { display:block !important; position:fixed !important; left:-9999px !important; top:0 !important; width:${vpW}px !important; visibility:hidden !important; }`;
@@ -2376,6 +2376,13 @@ document.addEventListener('keydown', e=>{
   }
   if(['ArrowRight','ArrowDown'].includes(e.key)) navigate(1);
   if(['ArrowLeft','ArrowUp'].includes(e.key))    navigate(-1);
+});
+
+// Genmål slides efter fullscreen er etableret (korrekt skærmbredde)
+document.addEventListener('fullscreenchange', () => {
+  if (pptMode && document.fullscreenElement) {
+    setTimeout(() => { fixSlideSizes(); scalePPT(); }, 150);
+  }
 });
 
 // ── START ─────────────────────────────────────────────────────
