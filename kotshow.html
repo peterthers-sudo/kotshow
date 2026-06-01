@@ -627,7 +627,7 @@ body {
   /* ── UDDANNELSES-KORT (intro top) ──────────────────────── */
   .udd-kort-sektion {
     display: flex; gap: 14px;
-    padding: 14px 20px 10px;
+    padding: 14px 28px 10px;
     background: #f0f4f8;
     border-bottom: 2px solid #e2e8f0;
     flex-shrink: 0;
@@ -1679,7 +1679,7 @@ function buildIntro() {
             <tr><td>Antal ansøgere i alt</td><td>${ANSØGERE.length}</td></tr>
           </table>
           <table class="stat-tabel" style="margin-top:14px;">
-            <thead><tr><th>Uddannelse</th><th>Antal pladser</th><th>Ansøgninger</th></tr></thead>
+            <thead><tr><th>Uddannelse</th><th>Pladser</th><th>Ansøgninger</th></tr></thead>
             <tbody>${(()=>{
               let sumP=0, sumA=0;
               const rows = UDBUD.map(u=>{
