@@ -320,8 +320,8 @@ body {
 }
 .kap-badge { font-size: 0.65rem; color: #64748b; font-weight: 600; }
 .kap-badge-right { margin-left: auto; }
-.plus-badge { background:#6b46c1; color:#fff; border-radius:4px; padding:1px 5px; font-size:0.65rem; font-weight:600; margin-left:auto; }
-.minus-badge { background:#c53030; color:#fff; border-radius:4px; padding:1px 5px; font-size:0.65rem; font-weight:600; margin-left:auto; }
+.plus-badge { background:#6b46c1; color:#fff; border-radius:3px; padding:0 4px; font-size:0.55rem; font-weight:700; margin-left:auto; line-height:1.6; align-self:center; }
+.minus-badge { background:#c53030; color:#fff; border-radius:3px; padding:0 4px; font-size:0.55rem; font-weight:700; margin-left:auto; line-height:1.6; align-self:center; }
 .group-header .header-icon { font-size:0.9rem; vertical-align:middle; }
 
 /* ── AVATARER ─────────────────────────────────────────── */
@@ -1840,18 +1840,7 @@ function buildSlide(s) {
       </div>`;
   }).join('');
 
-  let rejectedHTML = '';
-  if (s.afviste?.length) {
-    const avatars = s.afviste.map(id=>{
-      const info = ansInfo(id);
-      return `<div class="avatar ans-${id} afvist" title="${info?.navn||id}">${id}</div>`;
-    }).join('');
-    rejectedHTML = `
-      <div class="rejected-box">
-        <div class="rejected-header">Ansøgere uden tilbud</div>
-        <div class="rejected-slots">${avatars}</div>
-      </div>`;
-  }
+  const rejectedHTML = '';
 
   // Beregn hvem der ikke har sikker plads på dette trin
   const placeredeIds = new Set();
