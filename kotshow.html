@@ -1679,33 +1679,32 @@ function buildIntro() {
             <tr><td>Antal ansøgere i alt</td><td>${ANSØGERE.length}</td></tr>
           </table>
           <table class="stat-tabel" style="margin-top:14px;">
-            <thead><tr><th>Uddannelse</th><th>Antal pladser</th><th>Ansøgere ialt</th></tr></thead>
-            <tbody>${UDBUD.map(u=>{
-              const pladser = u.grupper.filter(g=>g.nr===10||g.nr===20).reduce((s,g)=>s+(g.kap||0),0);
-              const ansogere = ANSØGERE.filter(a=>a.ansøgninger.some(ans=>ans.udbud===u.id)).length;
-              return `<tr><td>${u.navn}</td><td>${pladser}</td><td>${ansogere}</td></tr>`;
-            }).join('')}</tbody>
+            <thead><tr><th>Uddannelse</th><th>Antal pladser</th><th>Ansøgninger</th></tr></thead>
+            <tbody>${(()=>{
+              let sumP=0, sumA=0;
+              const rows = UDBUD.map(u=>{
+                const p = u.grupper.filter(g=>g.nr===10||g.nr===20).reduce((s,g)=>s+(g.kap||0),0);
+                const a = ANSØGERE.filter(x=>x.ansøgninger.some(ans=>ans.udbud===u.id)).length;
+                sumP+=p; sumA+=a;
+                return `<tr><td>${u.navn}</td><td>${p}</td><td>${a}</td></tr>`;
+              }).join('');
+              return rows + `<tr style="font-weight:700;border-top:1px solid #e2e8f0;"><td>Ialt</td><td>${sumP}</td><td>${sumA}</td></tr>`;
+            })()}</tbody>
           </table>
         </div>
       </div>
     </div>
-    <div class="intro-layout">
-      <div class="intro-col-udbud">
-        <div class="intro-sektion-hdr">
-          <h2>KOT-Fordeling · Udbud</h2>
-          <span style="margin-left:auto;font-size:0.8rem;color:#63b3ed;">Trin 1 / ${SLIDES.length}</span>
-          <button class="stat-knap" onclick="visStatModal('introStatModal')" style="margin-left:8px;">📊 Statistik</button>
-        </div>
-        <div class="udd-kort-sektion">${uddKort}</div>
-      </div>
-      <div class="intro-col-kartotek">
-        <div class="intro-sektion-hdr">
-          <h2>KOT-Fordeling · Ansøgere</h2>
-        </div>
-        <div class="slide-body" style="overflow:auto;background:#f8fafc;">
-          <div class="kartotek-grid">${cards}</div>
-        </div>
-      </div>
+    <div class="intro-sektion-hdr">
+      <h2>KOT-Fordeling · Udbud</h2>
+      <span style="margin-left:auto;font-size:0.8rem;color:#63b3ed;">Trin 1 / ${SLIDES.length}</span>
+      <button class="stat-knap" onclick="visStatModal('introStatModal')" style="margin-left:8px;">📊 Statistik</button>
+    </div>
+    <div class="udd-kort-sektion">${uddKort}</div>
+    <div class="intro-sektion-hdr">
+      <h2>KOT-Fordeling · Ansøgere</h2>
+    </div>
+    <div class="slide-body" style="overflow:auto;background:#f8fafc;">
+      <div class="kartotek-grid">${cards}</div>
     </div>`;
 }
 
