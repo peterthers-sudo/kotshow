@@ -738,7 +738,7 @@ body {
   .edu-placeholder-sub { font-size:0.8rem; font-weight:700; color:#7c3aed; margin-bottom:8px; letter-spacing:0.05em; }
   .edu-placeholder-tekst { font-size:0.65rem; color:#94a3b8; max-width:220px; line-height:1.5; }
   .intro-layout { display:flex; flex-direction:column; }
-  .intro-col-udbud, .intro-col-kartotek { min-width:0; }
+  .intro-col-udbud, .intro-col-kartotek { min-width:0; width:100%; }
 
   body.layout-h .edu-sections {
     display: grid;
@@ -1679,10 +1679,11 @@ function buildIntro() {
             <tr><td>Antal ansøgere i alt</td><td>${ANSØGERE.length}</td></tr>
           </table>
           <table class="stat-tabel" style="margin-top:14px;">
-            <thead><tr><th>Uddannelse</th><th>Antal pladser</th></tr></thead>
+            <thead><tr><th>Uddannelse</th><th>Antal pladser</th><th>Ansøgere ialt</th></tr></thead>
             <tbody>${UDBUD.map(u=>{
               const pladser = u.grupper.filter(g=>g.nr===10||g.nr===20).reduce((s,g)=>s+(g.kap||0),0);
-              return `<tr><td>${u.navn}</td><td>${pladser}</td></tr>`;
+              const ansogere = ANSØGERE.filter(a=>a.ansøgninger.some(ans=>ans.udbud===u.id)).length;
+              return `<tr><td>${u.navn}</td><td>${pladser}</td><td>${ansogere}</td></tr>`;
             }).join('')}</tbody>
           </table>
         </div>
