@@ -1675,19 +1675,19 @@ function buildIntro() {
         </div>
         <div class="stat-modal-body">
           <table class="stat-tabel">
-            <thead><tr><th>Uddannelse</th><th style="text-align:right">Pladser</th><th style="text-align:right">Ansøgninger</th></tr></thead>
             <tbody>${(()=>{
               let sumP=0, sumA=0;
               const rows = UDBUD.map(u=>{
                 const p = u.grupper.filter(g=>g.nr===10||g.nr===20).reduce((s,g)=>s+(g.kap||0),0);
                 const a = ANSØGERE.filter(x=>x.ansøgninger.some(ans=>ans.udbud===u.id)).length;
                 sumP+=p; sumA+=a;
-                return `<tr><td>${u.navn}</td><td style="text-align:right">${p}</td><td style="text-align:right">${a}</td></tr>`;
+                return `<tr><td style="text-align:left">${u.navn}</td><td style="text-align:right">${p}</td><td style="text-align:right">${a}</td></tr>`;
               }).join('');
-              return rows
-                + `<tr style="font-weight:700;border-top:1px solid #e2e8f0;"><td>Ialt</td><td style="text-align:right">${sumP}</td><td style="text-align:right">${sumA}</td></tr>`
-                + `<tr style="border-top:2px solid #e2e8f0;color:#64748b;"><td>Antal uddannelser</td><td></td><td style="text-align:right">${UDBUD.length}</td></tr>`
-                + `<tr style="color:#64748b;"><td>Antal ansøgere i alt</td><td></td><td style="text-align:right">${ANSØGERE.length}</td></tr>`;
+              return `<tr style="color:#64748b;"><td style="text-align:left">Antal uddannelser</td><td></td><td style="text-align:right">${UDBUD.length}</td></tr>`
+                + `<tr style="color:#64748b;border-bottom:2px solid #e2e8f0;"><td style="text-align:left">Antal ansøgere i alt</td><td></td><td style="text-align:right">${ANSØGERE.length}</td></tr>`
+                + `<tr style="font-weight:700;color:#0f172a;"><td style="text-align:left">Uddannelse</td><td style="text-align:right">Pladser</td><td style="text-align:right">Ansøgninger</td></tr>`
+                + rows
+                + `<tr style="font-weight:700;border-top:1px solid #e2e8f0;"><td style="text-align:left">Ialt</td><td style="text-align:right">${sumP}</td><td style="text-align:right">${sumA}</td></tr>`;
             })()}</tbody>
           </table>
         </div>
