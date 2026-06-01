@@ -1967,7 +1967,6 @@ function buildSlide(s) {
 // ── NAVIGATION ────────────────────────────────────────────────
 let current = 0;
 let SLIDES = [];
-let pptSlideH = 0; // fast PPT-højde fra fixSlideSizes
 
 
 // ── PRÆSENTATIONSTILSTAND ─────────────────────────────────
@@ -1991,22 +1990,14 @@ function fixSlideSizes() {
     maxH = Math.max(maxH, s.scrollHeight);
   });
   document.head.removeChild(tmpStyle);
-  if (maxH > 0) {
-    if (pptMode) {
-      pptSlideH = maxH;          // bruges af scalePPT
-      vp.style.minHeight = '';   // lad ikke min-height forstyrre offsetHeight
-    } else {
-      pptSlideH = 0;
-      vp.style.minHeight = maxH + 'px';
-    }
-  }
+  if (maxH > 0) vp.style.minHeight = maxH + 'px';
 }
 
 function enterPPT() {
   pptMode = true;
   document.body.classList.add('ppt-mode');
   document.documentElement.requestFullscreen?.().catch(()=>{});
-  fixSlideSizes();
+  document.getElementById('slideViewport').style.minHeight = '';
   scalePPT();
   updatePPTNav();
 }
@@ -2016,7 +2007,7 @@ function exitPPT() {
   document.body.classList.remove('ppt-mode');
   document.exitFullscreen?.().catch(()=>{});
   requestAnimationFrame(() => requestAnimationFrame(fixSlideSizes));
-  
+
   const vp = document.getElementById('slideViewport');
   vp.style.transform = '';
   vp.style.width = '';
