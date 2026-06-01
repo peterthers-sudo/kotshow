@@ -1966,6 +1966,7 @@ function buildSlide(s) {
 // ── NAVIGATION ────────────────────────────────────────────────
 let current = 0;
 let SLIDES = [];
+let pptSlideH = 0; // fast PPT-højde fra fixSlideSizes
 
 
 // ── PRÆSENTATIONSTILSTAND ─────────────────────────────────
@@ -1989,7 +1990,15 @@ function fixSlideSizes() {
     maxH = Math.max(maxH, s.scrollHeight);
   });
   document.head.removeChild(tmpStyle);
-  if (maxH > 0) vp.style.minHeight = maxH + 'px';
+  if (maxH > 0) {
+    if (pptMode) {
+      pptSlideH = maxH;          // bruges af scalePPT
+      vp.style.minHeight = '';   // lad ikke min-height forstyrre offsetHeight
+    } else {
+      pptSlideH = 0;
+      vp.style.minHeight = maxH + 'px';
+    }
+  }
 }
 
 function enterPPT() {
@@ -2005,7 +2014,14 @@ function exitPPT() {
   pptMode = false;
   document.body.classList.remove('ppt-mode');
   document.exitFullscreen?.().catch(()=>{});
-  requestAnimationFrame(() => requestAnimationFrame(fixSlideSizes));
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+  // Mål i PPT-kontekst først → sætter pptSlideH korrekt
+  document.body.classList.add('ppt-mode');
+  fixSlideSizes();
+  document.body.classList.remove('ppt-mode');
+  // Mål derefter i normal-kontekst → sætter min-height til responsive
+  fixSlideSizes();
+}));
   
   const vp = document.getElementById('slideViewport');
   vp.style.transform = '';
@@ -2028,7 +2044,7 @@ function scalePPT() {
   const vw = window.visualViewport?.width  || window.innerWidth;
   const vh = window.visualViewport?.height || window.innerHeight;
   const nw = vp.offsetWidth  || 1024;
-  const nh = vp.offsetHeight || 576;
+  const nh = (pptMode && pptSlideH) ? pptSlideH : (vp.offsetHeight || 576);
   const scale = Math.min(vw / nw, vh / nh) * 0.97;
   vp.style.width  = nw + 'px';
   vp.style.height = nh + 'px';
