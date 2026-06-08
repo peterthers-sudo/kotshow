@@ -1,0 +1,2297 @@
+﻿<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzBmMTcyYSIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgZm9udC1mYW1pbHk9InN5c3RlbS11aSxzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmb250LXdlaWdodD0iODAwIiBmaWxsPSIjNjNiM2VkIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5LPC90ZXh0Pjwvc3ZnPg==">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>KOTshow</title>
+<style>
+/* ── KONFIGURÉRBARE VARIABLER ─────────────────────────── */
+:root {
+  --bg-page:        #0b0f19;
+  --bg-slide:       #ffffff;
+  --bg-header:      linear-gradient(135deg, #131c2e 0%, #0b0f19 100%);
+  --text-main:      #334155;
+  --text-muted:     #64748b;
+  --status-optaget:     #2f855a;
+  --status-ikke-optaget:#c53030;
+  --status-tom:         #fafafa;
+  --status-midlertidig: #c69214;
+  --status-pladsflyt:   #6b46c1;
+  --status-uændret:     #718096;
+  --avatar-size:    54px;
+  --avatar-font:    1.1rem;
+  --avatar-radius:  10px;
+  --slide-w:        1024px;
+  --font-main:      'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-main);
+  background: #000;
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* (Top-navigation fjernet — kun præsentationstilstand) */
+
+/* ── SLIDES ───────────────────────────────────────────── */
+.slide-viewport {
+  width: var(--slide-w);
+  max-width: 100%;
+  min-height: 576px;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-slide);
+  display: flex;
+  flex-direction: column;
+}
+.slide {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-slide);
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  height: 100%;
+}
+.slide.active {
+  position: relative;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── ANIMATIONER ──────────────────────────────────────── */
+.avatar.vil-rykke { filter:grayscale(1) brightness(0.55) !important; }
+@keyframes avatarFadeIn {
+  from { opacity:0; transform:scale(0.7); }
+  to   { opacity:1; transform:scale(1); }
+}
+.slide.active .avatar.midlertidig {
+  animation: avatarFadeIn 1.2s ease 0.3s both;
+}
+
+
+/* ── SLIDE HEADER ─────────────────────────────────────── */
+.slide-header {
+  background: var(--bg-header);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  height: 64px;
+  flex-shrink: 0;
+  justify-content: space-between;
+}
+.slide-header h1 { font-size: 1.15rem; font-weight: 600; letter-spacing: -0.01em; color: #f1f5f9; }
+.slide-header .slide-num { font-size: 0.8rem; color: #63b3ed; font-weight: 600; }
+
+/* ── SLIDE BODY ───────────────────────────────────────── */
+.slide-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 28px;
+  gap: 16px;
+}
+
+/* ── UDDANNELSES-SEKTIONER (stablede, fuld bredde) ─────── */
+.edu-sections { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+
+.edu-section {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  /* Single-udbud: fyld al tilgængelig plads lodret */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.edu-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px;
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+.edu-section-header .ikon { font-size: 1.2rem; line-height: 1; }
+
+.group-row { border-top: 1px solid rgba(0,0,0,0.07); flex: 1; display: flex; flex-direction: column; }
+.group-row-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: rgba(15,23,42,0.04);
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+.group-row-slots {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  align-content: center;
+  gap: 7px;
+  padding: 12px 16px;
+  flex: 1;
+  min-width: 0;
+  transition: padding 0.5s ease;
+}
+
+/* "+N flere i kø"-felt på sidste plads, når rækken er fuld */
+.ko-mere {
+  display: flex; align-items: center; justify-content: center;
+  width: var(--avatar-size); height: var(--avatar-size);
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #e2e8f0; color: #475569;
+  font-weight: 800; font-size: calc(var(--avatar-size) * 0.3);
+  border: 1.5px dashed #94a3b8;
+}
+
+/* Kapacitets-felt: ét lysegråt felt pr. plads (fyldt, ledig stol eller tom). */
+.kap-celle {
+  display: flex; align-items: center; justify-content: center;
+  width: calc(var(--avatar-size) + 10px);
+  height: calc(var(--avatar-size) + 10px);
+  background: #eef2f6;
+  border: 1px solid #cfd8e3;
+  border-radius: 14px;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+}
+
+/* ── UDDANNELSES-LABEL ────────────────────────────────── */
+.udbud-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 12px 8px;
+  gap: 2px;
+  height: 94px;
+  align-self: center;
+}
+.udbud-label span { font-size: 0.65rem; font-weight: 500; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.02em; }
+
+/* ── GRUPPE-BOKSE ─────────────────────────────────────── */
+.group-box {
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 94px;
+  align-self: center;
+}
+.group-header {
+  color: #475569;
+  background: rgba(15,23,42,0.05);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.group-slots {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.kap-badge { font-size: 0.65rem; color: #64748b; font-weight: 600; }
+.kap-badge-right { margin-left: auto; }
+.plus-badge { background:#6b46c1; color:#fff; border-radius:4px; padding:1px 5px; font-size:0.65rem; font-weight:600; margin-left:auto; }
+.minus-badge { background:#c53030; color:#fff; border-radius:4px; padding:1px 5px; font-size:0.65rem; font-weight:600; margin-left:auto; }
+.group-header .header-icon { font-size:0.9rem; vertical-align:middle; }
+
+/* ── AVATARER ─────────────────────────────────────────── */
+.avatar {
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  border-radius: var(--avatar-radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  font-size: var(--avatar-font);
+  font-weight: 600;
+  color: #fff;
+  position: relative;
+  box-shadow: inset 0 -2px 0px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  line-height: 1.15;
+}
+.avatar-val {
+  font-size: 0.5rem;
+  font-weight: 700;
+  opacity: 0.88;
+  line-height: 1;
+}
+.avatar-lock {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  line-height: 1;
+  z-index: 2;
+  pointer-events: auto;
+  cursor: help;
+}
+/* Avatar farver (A–Z) — kraftige farver til høj genkendelighed */
+.ans-A{background:#E11D48}.ans-B{background:#2563EB}.ans-C{background:#16A34A}.ans-D{background:#D97706}
+.ans-E{background:#7C3AED}.ans-F{background:#DB2777}.ans-G{background:#0D9488}.ans-H{background:#EA580C}
+.ans-I{background:#4F46E5}.ans-J{background:#059669}.ans-K{background:#B45309}.ans-L{background:#C026D3}
+.ans-M{background:#0284C7}.ans-N{background:#9333EA}.ans-O{background:#DC2626}.ans-P{background:#65A30D}
+.ans-Q{background:#475569}.ans-R{background:#BE123C}.ans-S{background:#1D4ED8}.ans-T{background:#047857}
+.ans-U{background:#A21CAF}.ans-V{background:#C2410C}.ans-W{background:#6D28D9}.ans-X{background:#0369A1}
+.ans-Y{background:#15803D}.ans-Z{background:#4E5D6C}
+
+/* ── Form-differentiering ──────────────────────────────────────
+   Tre former oven i farven, så ansøgere kan skelnes på form alene.
+   Tildelingen er optimeret så farver der ligner hinanden får
+   forskellig form (A/O, D/H, B/M, E/I adskilt).               */
+
+/* Form 1 · Cirkel (helt rund) */
+.ans-A, .ans-B, .ans-C, .ans-H, .ans-J, .ans-P, .ans-S, .ans-T, .ans-X {
+  border-radius: 50% !important;
+}
+
+/* Form 2 · Blød firkant (squircle) */
+.ans-O, .ans-M, .ans-G, .ans-I, .ans-K, .ans-Q, .ans-U, .ans-W, .ans-Y {
+  border-radius: calc(var(--avatar-size) * 0.25) !important;
+}
+
+/* Form 3 · Dråbe (spids i bund-højre) */
+.ans-D, .ans-E, .ans-F, .ans-L, .ans-N, .ans-R, .ans-V, .ans-Z {
+  border-radius: 50% 50% 15% 50% !important;
+}
+
+/* Status-effekter */
+.avatar.optaget  { outline:2px solid var(--status-optaget);     outline-offset:2px; }
+.avatar.midlertidig .meeple { opacity: 0.7; }
+.avatar-vent { font-size: 0.72rem; }
+.avatar-terning {
+  position: absolute; top: -9px; right: 2px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; line-height: 1; z-index: 3;
+  pointer-events: auto; cursor: help;
+}
+.avatar.pladsflyt   { outline:2px dashed var(--status-pladsflyt);  outline-offset:2px; }
+.avatar.uændret  { outline:1.5px solid var(--status-uændret);   outline-offset:2px; }
+.avatar.afvist   { outline:2px solid var(--status-ikke-optaget); outline-offset:2px; opacity:0.85; }
+
+/* ── MEEPLE-FIGUR ─────────────────────────────────────── */
+.avatar.meeple-avatar {
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none;
+  outline: none !important;
+  overflow: visible;
+}
+.avatar.meeple-avatar .meeple {
+  width: 100%; height: 100%; display: block; overflow: visible;
+  filter: drop-shadow(0 1.5px 1.5px rgba(0,0,0,0.28));
+}
+.meeple-id  { fill: #fff; font-weight: 800; text-anchor: middle; }
+.meeple-num { fill: #fff; font-weight: 700; font-size: 16px; text-anchor: middle; }
+.avatar.meeple-avatar.afvist { opacity: 0.5; }
+
+.tom-plads {
+  width:var(--avatar-size); height:var(--avatar-size);
+  border-radius:var(--avatar-radius);
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:calc(var(--avatar-size) * 0.82);
+  line-height:1;
+  opacity:0.5;
+}
+.tom-plads.ny-plads {
+  opacity:0.75;
+  position:relative;
+}
+.tom-plads.ny-plads::after {
+  content:'NY';
+  position:absolute;
+  top:-7px; right:-7px;
+  background:#7c3aed;
+  color:#fff;
+  font-size:0.38rem;
+  font-weight:900;
+  letter-spacing:0.03em;
+  padding:1px 3px;
+  border-radius:3px;
+  line-height:1.4;
+  pointer-events:none;
+}
+
+/* ── AFVISTE ──────────────────────────────────────────── */
+.rejected-box {
+  border-radius:8px; overflow:hidden; display:flex; flex-direction:column;
+  background:#fff5f5; border:1px solid #fee2e2; padding:12px 14px; gap:10px; margin-top:4px;
+}
+.rejected-header { color:#991b1b; font-size:0.75rem; font-weight:700; letter-spacing:0.03em; text-transform:uppercase; }
+.rejected-slots  { display:flex; align-items:center; gap:6px; }
+
+/* ── LEGENDE ──────────────────────────────────────────── */
+.legend { display:flex; gap:20px; align-items:center; font-size:0.72rem; color:#64748b; padding-top:8px; border-top:1px solid #f1f5f9; }
+.legend-item { display:flex; align-items:center; gap:6px; }
+
+/* ── IKKE PLACERET ────────────────────────────────────── */
+.ikke-placeret-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0 2px;
+  border-top: 1px solid #f1f5f9;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.ikke-placeret-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.ikke-placeret-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.avatar-mini {
+  width: 24px; height: 24px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0.75;
+}
+
+/* ── NOTE ─────────────────────────────────────────────── */
+.slide-note {
+  background:#f8fafc; border-left:3px solid #94a3b8; border-radius:4px;
+  padding:10px 14px; font-size:0.75rem; color:#475569; line-height:1.4;
+  margin-top:auto;
+}
+
+/* ── KARTOTEK (intro-slide) ───────────────────────────── */
+.kartotek-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:16px 12px;
+  padding:12px 4px;
+}
+.kartotek-kort {
+  position:relative; display:flex; flex-direction:column; gap:6px;
+  background:#fff; border:1px solid #cbd5e1;
+  border-radius:0px 6px 6px 6px; padding:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 6px -2px rgba(148,163,184,.1);
+  transition:all 0.2s ease-in-out;
+}
+.kartotek-kort:hover { transform:translateY(-6px); border-color:#94a3b8; z-index:10;
+  box-shadow:0 10px 15px -3px rgba(148,163,184,.21),0 4px 6px -4px rgba(148,163,184,.1); }
+.kartotek-kort::before { display:none; }
+.kartotek-linje { border-top:1px dashed #fee2e2; margin-top:2px; padding-top:6px; }
+
+/* Tabs */
+.ktabs { display:flex; margin:-12px -12px 8px -12px; border-bottom:1px solid #e2e8f0; }
+.ktab {
+  flex:1; background:#f1f5f9; border:none; border-right:1px solid #e2e8f0;
+  padding:5px 4px; font-size:0.58rem; cursor:pointer; color:#64748b;
+  font-family:var(--font-main); font-weight:500; transition:background .15s,color .15s; text-align:center;
+}
+.ktab:last-child { border-right:none; }
+.ktab.active { background:#fff; color:#1e293b; font-weight:700; }
+.ktab:hover:not(.active) { background:#e9eef5; color:#334155; }
+.kpanel { display:block; }
+.kpanel.skjult { display:none; }
+.motiv-tekst { font-size:0.7rem; color:#334155; line-height:1.55; font-style:italic; padding:6px 2px 2px; }
+
+  /* ── STATISTIK-MODAL ──────────────────────────────────── */
+  .stat-modal-backdrop {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(10,15,30,0.72);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+  }
+  .stat-modal-backdrop.aktiv { display: flex; }
+  .stat-modal {
+    background: #fff;
+    border-radius: 14px;
+    min-width: 340px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-modal-header {
+    background: linear-gradient(135deg, #131c2e 0%, #1e3a5f 100%);
+    padding: 18px 24px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .stat-modal-header h2 {
+    font-size: 1rem; font-weight: 700;
+    color: #f1f5f9; margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .stat-modal-luk {
+    background: rgba(255,255,255,0.12); border: none;
+    width: 28px; height: 28px; border-radius: 50%;
+    font-size: 0.9rem; cursor: pointer;
+    color: #94a3b8; line-height: 1;
+    font-family: var(--font-main);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .stat-modal-luk:hover { background: rgba(255,255,255,0.22); color: #fff; }
+  .stat-modal-body { padding: 20px 24px 8px; }
+  .stat-tabel {
+    width: 100%; border-collapse: collapse;
+    font-size: 0.82rem;
+    margin-bottom: 4px;
+  }
+  .stat-tabel tr { border-bottom: 1px solid #f1f5f9; }
+  .stat-tabel tr:last-child { border-bottom: none; }
+  .stat-tabel td { padding: 8px 4px; color: #475569; }
+  .stat-tabel td:last-child { text-align: right; font-weight: 700; color: #0f172a; }
+  .stat-tabel .stat-sep td {
+    padding-top: 14px; padding-bottom: 6px;
+    font-weight: 700; color: #64748b;
+    font-size: 0.7rem; text-transform: uppercase;
+    letter-spacing: 0.06em; border-bottom: 2px solid #e2e8f0;
+  }
+  .stat-afviste {
+    border-top: 2px solid #fee2e2;
+    background: #fff5f5;
+    padding: 12px 24px 16px;
+    margin-top: 4px;
+  }
+  .stat-afviste-label {
+    font-size: 0.7rem; font-weight: 700;
+    color: #991b1b; text-transform: uppercase;
+    letter-spacing: 0.05em; margin-bottom: 8px;
+  }
+  .stat-afviste-slots { display: flex; flex-wrap: wrap; gap: 5px; }
+  .stat-knap {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #1e293b; color: #f1f5f9;
+    border: none; border-radius: 6px;
+    padding: 7px 16px; font-size: 0.78rem;
+    font-weight: 600; cursor: pointer;
+    font-family: var(--font-main);
+    transition: background 0.15s;
+  }
+  .stat-knap:hover { background: #334155; }
+
+  /* ── UDDANNELSES-KORT (intro top) ──────────────────────── */
+  .udd-kort-sektion {
+    display: flex; gap: 14px;
+    padding: 14px 20px 10px;
+    background: #f0f4f8;
+    border-bottom: 2px solid #e2e8f0;
+    flex-shrink: 0;
+  }
+  .udd-kort {
+    flex: 1; background: #fff;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    padding: 14px 16px 12px;
+    display: flex; flex-direction: column;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+  .udd-kort-top {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+  }
+  .udd-kort-ikon {
+    font-size: 2.4rem; line-height: 1;
+    background: #f8fafc; border-radius: 8px;
+    width: 54px; height: 54px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; border: 1px solid #e2e8f0;
+  }
+  .udd-kort-navn {
+    font-size: 0.92rem; font-weight: 700; color: #0f172a;
+  }
+  .udd-kort-pladser { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+  .udd-pil {
+    font-size: 0.68rem; font-weight: 600;
+    padding: 2px 8px; border-radius: 4px;
+  }
+  .udd-pil-k1 { background: #eef2ff; color: #3730a3; }
+  .udd-pil-k2 { background: #fdf4ff; color: #7e22ce; }
+  .udd-kort-tekst {
+    font-size: 0.72rem; color: #64748b;
+    font-style: italic; line-height: 1.45; margin-top: 8px;
+    border-top: 1px solid #f1f5f9; padding-top: 8px;
+  }
+
+  /* ── LÅS-LEGENDE ─────────────────────────────────────── */
+  .laas-legende {
+    display: flex; gap: 16px; align-items: center;
+    font-size: 0.72rem; color: #64748b;
+  }
+  .laas-legende-item { display: flex; align-items: center; gap: 5px; }
+
+  .intro-sektion-hdr {
+    background: var(--bg-header);
+    color: #f1f5f9;
+    display: flex; align-items: center;
+    padding: 0 28px; height: 44px;
+    flex-shrink: 0;
+  }
+  .intro-sektion-hdr h2 {
+    font-size: 0.95rem; font-weight: 600;
+    letter-spacing: -0.01em; margin: 0;
+  }
+
+  /* ── LAYOUT-TOGGLE (2-kolonne edu-grid) ──────────────── */
+  .edu-placeholder { display:none; }
+  body.layout-h .edu-placeholder {
+    display:flex; align-items:center; justify-content:center;
+    border:2px dashed #cbd5e1; border-radius:12px;
+    background:repeating-linear-gradient(135deg,#f8fafc 0px,#f8fafc 10px,#f1f5f9 10px,#f1f5f9 20px);
+    min-height:120px;
+  }
+  .edu-placeholder-inner { text-align:center; padding:20px; }
+  .edu-placeholder-titel { font-size:1rem; font-weight:800; color:#475569; margin-bottom:4px; }
+  .edu-placeholder-sub { font-size:0.8rem; font-weight:700; color:#7c3aed; margin-bottom:8px; letter-spacing:0.05em; }
+  .edu-placeholder-tekst { font-size:0.65rem; color:#94a3b8; max-width:220px; line-height:1.5; }
+  .intro-layout { display:flex; flex-direction:column; }
+  .intro-col-udbud, .intro-col-kartotek { min-width:0; }
+
+  body.layout-h .edu-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    align-items: start;
+  }
+
+  /* ── PRÆSENTATION ────────────────────────────────────── */
+  /* slide-viewporten skaleres til skærmen via JS (scalePPT) */
+  .slide-viewport {
+    position: fixed;
+    border-radius: 0;
+    transform-origin: top left;
+    max-width: none;
+    box-shadow: none;
+  }
+  /* Noter, legende og "ikke placeret" skjules i præsentationen.
+     Vil du vise noterne, fjern .slide-note fra reglen herunder. */
+  .slide-note,
+  .legend,
+  .laas-legende,
+  .ikke-placeret-bar { display: none !important; }
+
+  /* Tydelig navigations-pille i bunden */
+  .ppt-nav {
+    display: flex;
+    position: fixed;
+    bottom: max(18px, env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    pointer-events: auto;
+    background: rgba(15,23,42,0.82);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    padding: 6px 10px;
+    border-radius: 999px;
+    gap: 8px;
+    align-items: center;
+    color: #e2e8f0;
+    font-family: var(--font-main);
+    font-size: 0.85rem;
+    box-shadow: 0 6px 22px rgba(0,0,0,0.45);
+  }
+  .ppt-nav button {
+    background: rgba(255,255,255,0.14);
+    border: none;
+    color: #fff;
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    pointer-events: auto;
+    font-family: var(--font-main);
+    transition: background 0.15s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ppt-nav button:hover:not(:disabled) { background: rgba(255,255,255,0.30); }
+  .ppt-nav button:active:not(:disabled) { transform: scale(0.92); }
+  .ppt-nav button:disabled { opacity: 0.25; cursor: not-allowed; }
+  .ppt-nav-counter { color: rgba(255,255,255,0.85); font-size: 0.74rem; font-weight: 600; min-width: 58px; text-align: center; letter-spacing: 0.02em; }
+  .ppt-layout-btn { font-size:1.1rem !important; }
+  body.layout-h .ppt-layout-btn { background:rgba(124,58,237,0.55) !important; }
+
+  /* ── PLADSFLYT-ANIMATION ─────────────────────────────── */
+  @keyframes badgeBounceIn {
+    0%   { transform: scale(0) translateY(-8px); opacity: 0; }
+    65%  { transform: scale(1.25) translateY(0); opacity: 1; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+  }
+  @keyframes groupPulse {
+    0%,100% { background: inherit; }
+    40%     { background: rgba(99,102,241,0.12); }
+  }
+  @keyframes placerPuls {
+    0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+    40%  { transform: scale(1.16); box-shadow: 0 0 0 5px rgba(34,197,94,0.45); }
+    100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  }
+  @keyframes midlBlink {
+    0%   { transform: scale(1);    opacity: 1;   }
+    18%  { transform: scale(1.22); opacity: 0.45;}
+    36%  { transform: scale(1);    opacity: 1;   }
+    54%  { transform: scale(1.22); opacity: 0.45;}
+    72%  { transform: scale(1);    opacity: 1;   }
+    100% { transform: scale(1);    opacity: 1;   }
+  }
+  /* Midlertidig placering markeres med ⏳ + let gennemsigtighed (statisk) */
+  @keyframes nyoptagetBlink {
+    0%   { transform: scale(1);    filter: brightness(1);   }
+    30%  { transform: scale(1.35); filter: brightness(1.6); }
+    60%  { transform: scale(1);    filter: brightness(1);   }
+    80%  { transform: scale(1.12); filter: brightness(1.3); }
+    100% { transform: scale(1);    filter: brightness(1);   }
+  }
+  .nyoptaget-badge {
+    position: fixed; z-index: 10000; pointer-events: none;
+    transform: translate(-50%, -100%);
+    font-size: 0.86rem; font-weight: 800; letter-spacing: 0.2px;
+    color: #fff; background: #16a34a;
+    padding: 4px 12px; border-radius: 10px;
+    border: 2px solid #bbf7d0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.32);
+    white-space: nowrap;
+  }
+  .nyoptaget-badge.rykket-op { background: #2563eb; border-color: #bfdbfe; }
+  .slide.active .plus-badge  { animation: badgeBounceIn 0.45s ease 0.6s both; }
+  .slide.active .minus-badge { animation: badgeBounceIn 0.45s ease 0.2s both; }
+  .pf-flyer {
+    position: fixed; pointer-events: none; z-index: 9999;
+    font-size: 1.4rem; line-height: 1;
+    transition: left 0.75s cubic-bezier(0.4,0,0.2,1),
+                top  0.75s cubic-bezier(0.4,0,0.2,1),
+                opacity 0.2s ease;
+  }
+
+  /* ── FLYVER-VÆK (ansøger optages på højere prioritet på andet udbud) ── */
+  .fly-away-avatar {
+    position: fixed; z-index: 9999; pointer-events: none;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.30);
+    transition: transform 1.95s cubic-bezier(0.4,0,0.2,1),
+                opacity   1.95s ease;
+  }
+  .fly-away-avatar.go {
+    transform: translate(110px, -440px) rotate(22deg) scale(0.55);
+    opacity: 0;
+  }
+  .fly-away-label {
+    position: absolute; top: -30px; left: 50%;
+    transform: translateX(-50%); white-space: nowrap;
+    font-size: 0.92rem; font-weight: 800; letter-spacing: 0.2px;
+    background: #fff; color: #1e293b;
+    padding: 4px 12px; border-radius: 10px;
+    border: 2px solid #16a34a;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.28);
+  }
+
+  /* ── RYKKER OP (standby → ordinær: lodret stigning) ── */
+  .ryk-op-avatar {
+    position: fixed; z-index: 9999; pointer-events: none;
+    box-shadow: 0 6px 20px rgba(22,163,74,0.45);
+    transition: top  0.7s cubic-bezier(0.34,1.35,0.5,1),
+                left 0.7s cubic-bezier(0.4,0,0.2,1),
+                opacity 0.3s ease;
+  }
+  .ryk-op-label {
+    position: absolute; bottom: -22px; left: 50%;
+    transform: translateX(-50%); white-space: nowrap;
+    font-size: 0.6rem; font-weight: 700;
+    background: #16a34a; color: #fff;
+    padding: 2px 8px; border-radius: 8px;
+    box-shadow: 0 2px 7px rgba(0,0,0,0.28);
+  }
+  /* ── 0-pladser-gruppe (kapacitet flyttet væk) — farveblind-sikker grå ── */
+  .group-row.nul-kapacitet { opacity: 0.62; }
+  .group-row.nul-kapacitet .group-row-slots {
+    min-height: 26px; display: flex; align-items: center;
+    border: 1px dashed #cbd5e1; border-radius: 8px;
+    background: repeating-linear-gradient(45deg, #f8fafc, #f8fafc 7px, #f1f5f9 7px, #f1f5f9 14px);
+    padding: 0 10px;
+  }
+  .nul-pladser-badge {
+    margin-left: 6px; font-size: 0.6rem; font-weight: 700;
+    color: #475569; background: #e2e8f0;
+    padding: 1px 7px; border-radius: 8px; letter-spacing: 0.2px;
+  }
+  .nul-pladser-tekst { font-size: 0.66rem; color: #94a3b8; font-style: italic; }
+
+  @keyframes rykOpGlow {
+    0%   { box-shadow: inset 0 0 0 0 rgba(22,163,74,0.0); }
+    45%  { box-shadow: inset 0 0 0 3px rgba(22,163,74,0.5); }
+    100% { box-shadow: inset 0 0 0 0 rgba(22,163,74,0.0); }
+  }
+
+  /* Highlight på den ansøger der er ved at forlade udbuddet */
+  @keyframes flyverPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.0); transform: scale(1); }
+    50%     { box-shadow: 0 0 0 6px rgba(245,158,11,0.6); transform: scale(1.1); }
+  }
+  .avatar.flyver-alert {
+    animation: flyverPulse 0.55s ease-in-out infinite;
+    z-index: 8;
+  }
+  .flyver-badge {
+    position: absolute; bottom: 100%; left: 50%;
+    transform: translateX(-50%); margin-bottom: 7px;
+    white-space: nowrap; font-size: 0.6rem; font-weight: 700;
+    background: #16a34a; color: #fff;
+    padding: 3px 9px; border-radius: 8px;
+    box-shadow: 0 2px 7px rgba(0,0,0,0.28); z-index: 9;
+    animation: badgePop 0.3s ease both;
+  }
+  @keyframes badgePop {
+    from { opacity:0; transform: translateX(-50%) translateY(5px); }
+    to   { opacity:1; transform: translateX(-50%) translateY(0); }
+  }
+
+  /* ── KAPACITETSGRÆNSE (markør på midlertidig-slides) ──────── */
+  .kap-graense {
+    flex: 0 0 auto; align-self: stretch;
+    border-left: 2px dashed #334155;
+    margin: 0 9px;
+  }
+
+  /* ── OVERBLIK-OVERLAY (på opstartssiden) ──────────────────── */
+  .overblik-overlay {
+    position: absolute; inset: 0; z-index: 60;
+    background: rgba(15,23,42,0.55);
+    display: none; align-items: center; justify-content: center;
+    padding: 18px;
+  }
+  .overblik-overlay.aktiv { display: flex; }
+  .overblik-overlay .stat-modal { position: relative; }
+
+  /* ── STABIL-ANIMATION (pladsflyt-tjek) ──────────────────── */
+  .stabil-overlay {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    pointer-events: none; z-index: 50;
+  }
+  .stabil-scene {
+    display: flex; align-items: center; gap: 8px;
+    animation: stabilFadeIn 0.5s ease 0.2s both;
+  }
+  @keyframes stabilFadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .stabil-truck {
+    font-size: 3.5rem; line-height: 1;
+    transform: scaleX(-1);
+    animation: truckDrive 0.8s ease 0.3s both;
+  }
+  @keyframes truckDrive {
+    from { transform: scaleX(-1) translateX(120px); opacity: 0; }
+    80%  { transform: scaleX(-1) translateX(-8px); opacity: 1; }
+    to   { transform: scaleX(-1) translateX(0); opacity: 1; }
+  }
+  .stabil-stop {
+    display: inline-flex; align-items: center; justify-content: center;
+    animation: stopAppear 0.4s cubic-bezier(0.34,1.56,0.64,1) 1s both;
+  }
+  .stop-tegn {
+    display: flex; align-items: center; justify-content: center;
+    width: 52px; height: 52px;
+    background: #dc2626;
+    clip-path: polygon(30% 0%,70% 0%,100% 30%,100% 70%,70% 100%,30% 100%,0% 70%,0% 30%);
+    color: #fff; font-size: 0.72rem; font-weight: 900; letter-spacing: 2px;
+    border: 3px solid #fff;
+  }
+  @keyframes stopAppear {
+    from { transform: scale(0) rotate(-30deg); opacity: 0; }
+    to   { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  .stabil-tekst {
+    font-size: 0.95rem; font-weight: 700;
+    color: #334155; margin-top: 14px;
+    animation: stabilFadeIn 0.5s ease 1.4s both;
+    letter-spacing: 0.02em;
+  }
+  .stabil-overlay.fade-ud {
+    animation: stabilUd 0.6s ease forwards;
+  }
+  @keyframes stabilUd {
+    to { opacity: 0; }
+  }
+
+  /* ── FYRVÆRKERI (Endelig fordeling) ──────────────────── */
+  .fyrvk-particle {
+    position: fixed;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+  }
+  @keyframes fyrvkFly {
+    0%   { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     KONFIGURATION — Rediger kun herunder
+     ══════════════════════════════════════════════════════ -->
+<script>
+
+const ANSØGERE = [
+  // ── K1-spor (Kvote 1 / K1-standby, rangeres efter gennemsnit) ──
+  { id:"A", navn:"Anna",     gns:11.9, kval:12, ansøgninger:[{prio:1,udbud:"A",grupper:[10,60]},{prio:2,udbud:"B",grupper:[10]},{prio:3,udbud:"C",grupper:[10]}] },
+  { id:"B", navn:"Bent",     gns:11.5, kval:10, ansøgninger:[{prio:1,udbud:"B",grupper:[10]},{prio:2,udbud:"A",grupper:[10]}] },
+  { id:"C", navn:"Camilla",  gns:11.1, kval:14, ansøgninger:[{prio:1,udbud:"B",grupper:[10]},{prio:2,udbud:"A",grupper:[10,60]}] },
+  { id:"D", navn:"David",    gns:10.7, kval:8,  ansøgninger:[{prio:1,udbud:"A",grupper:[10]},{prio:2,udbud:"C",grupper:[10]}] },
+  { id:"E", navn:"Emma",     gns:10.3, kval:16, ansøgninger:[{prio:1,udbud:"C",grupper:[10]},{prio:2,udbud:"A",grupper:[10,60]}] },
+  { id:"F", navn:"Finn",     gns:9.9,  kval:9,  ansøgninger:[{prio:1,udbud:"A",grupper:[10,60]}] },
+  { id:"G", navn:"Gitte",    gns:9.9,  kval:11, ansøgninger:[{prio:1,udbud:"A",grupper:[10,60]}] },
+  { id:"H", navn:"Hans",     gns:9.9,  kval:7,  ansøgninger:[{prio:1,udbud:"A",grupper:[10,60]}] },
+  { id:"I", navn:"Ida",      gns:8.7,  kval:6,  ansøgninger:[{prio:1,udbud:"B",grupper:[10]},{prio:2,udbud:"A",grupper:[10,60]}] },
+  { id:"J", navn:"Jonas",    gns:8.3,  kval:5,  ansøgninger:[{prio:1,udbud:"A",grupper:[10]}] },
+  { id:"S", navn:"Sofie",    gns:11.3, kval:4,  ansøgninger:[{prio:1,udbud:"A",grupper:[10,20]}] },
+  // ── K2-spor (Kvote 2 / K2-standby, rangeres efter kvalifikation) ──
+  { id:"K", navn:"Karen",    gns:5.0,  kval:42, ansøgninger:[{prio:1,udbud:"A",grupper:[20,70]},{prio:2,udbud:"C",grupper:[20]}] },
+  { id:"L", navn:"Lars",     gns:5.1,  kval:38, ansøgninger:[{prio:1,udbud:"C",grupper:[20]},{prio:2,udbud:"A",grupper:[20]}] },
+  { id:"M", navn:"Mette",    gns:5.2,  kval:34, ansøgninger:[{prio:1,udbud:"A",grupper:[20,70]},{prio:2,udbud:"B",grupper:[20]}] },
+  { id:"N", navn:"Niels",    gns:5.3,  kval:30, ansøgninger:[{prio:1,udbud:"C",grupper:[20]},{prio:2,udbud:"A",grupper:[20,70]}] },
+  { id:"O", navn:"Olivia",   gns:5.4,  kval:26, ansøgninger:[{prio:1,udbud:"B",grupper:[20]},{prio:2,udbud:"C",grupper:[20]},{prio:3,udbud:"A",grupper:[20]}] },
+  { id:"P", navn:"Pernille", gns:5.5,  kval:22, ansøgninger:[{prio:1,udbud:"B",grupper:[20]},{prio:2,udbud:"A",grupper:[20,70]}] },
+  // ── Bredt-søgende (Kvote 1 + Kvote 2 + standby, Jura som 2./3. prio) ──
+  { id:"W", navn:"William",  gns:8.0,  kval:20, ansøgninger:[{prio:1,udbud:"B",grupper:[10]},{prio:2,udbud:"A",grupper:[10,20,60,70]}] },
+  { id:"X", navn:"Xenia",    gns:7.6,  kval:24, ansøgninger:[{prio:1,udbud:"C",grupper:[10]},{prio:2,udbud:"A",grupper:[10,20,60,70]}] },
+  { id:"Y", navn:"Yrsa",     gns:7.2,  kval:18, ansøgninger:[{prio:1,udbud:"A",grupper:[10,20,60,70]}] },
+  { id:"Z", navn:"Zakaria",  gns:6.8,  kval:28, ansøgninger:[{prio:1,udbud:"C",grupper:[20]},{prio:2,udbud:"A",grupper:[10,20,60,70]}] },
+  { id:"T", navn:"Thomas",   gns:7.0,  kval:3,  ansøgninger:[{prio:1,udbud:"A",grupper:[10]}] },
+];
+
+/*const ANSØGERE = [
+  { id:"AA", navn:"Anders",   gns:12.0, kval:15, ansøgninger:[{prio:1,udbud:"A",grupper:[10]},{prio:2,udbud:"B",grupper:[10]}] },
+  { id:"BA", navn:"Bente",    gns:11.8, kval:3,  ansøgninger:[{prio:1,udbud:"A",grupper:[10]},{prio:2,udbud:"C",grupper:[10,20]}] },
+  { id:"CA", navn:"Casper",   gns:11.6, kval:28, ansøgninger:[{prio:1,udbud:"A",grupper:[10,20]},{prio:2,udbud:"B",grupper:[10,20]}] },
+  { id:"DA", navn:"Dorte",    gns:11.4, kval:35,  ansøgninger:[{prio:1,udbud:"A",grupper:[10,20,60,70]},{prio:2,udbud:"C",grupper:[10,20]}] },
+  { id:"EA", navn:"Emil",     gns:11.2, kval:30, ansøgninger:[{prio:1,udbud:"C",grupper:[10,20]},{prio:2,udbud:"B",grupper:[10,20]}] },
+  { id:"FA", navn:"Freja",    gns:11.0, kval:25, ansøgninger:[{prio:1,udbud:"C",grupper:[30,80]},{prio:2,udbud:"A",grupper:[30,80]}] },
+  { id:"GA", navn:"Gustav",   gns:10.8, kval:33,  ansøgninger:[{prio:1,udbud:"A",grupper:[10]},{prio:2,udbud:"C",grupper:[10,20]}] },
+  { id:"HA", navn:"Helena",   gns:10.8, kval:27, ansøgninger:[{prio:1,udbud:"C",grupper:[10]}] },
+  { id:"IA", navn:"Ida",      gns:10.8, kval:40, ansøgninger:[{prio:1,udbud:"B",grupper:[20,70]},{prio:2,udbud:"A",grupper:[20,70]},{prio:3,udbud:"C",grupper:[20,70]}] },
+  { id:"JA", navn:"Jonas",    gns:10.2, kval:41,  ansøgninger:[{prio:1,udbud:"A",grupper:[10,20,60,70]},{prio:2,udbud:"B",grupper:[10]}] },
+  { id:"KA", navn:"Karen",    gns:10.0, kval:37, ansøgninger:[{prio:1,udbud:"C",grupper:[10]},{prio:2,udbud:"A",grupper:[10]}] },
+  { id:"LA", navn:"Lars",     gns:9.8,  kval:31, ansøgninger:[{prio:1,udbud:"A",grupper:[10,20,60,70]},{prio:2,udbud:"C",grupper:[10]},{prio:3,udbud:"B",grupper:[10]}] },
+  { id:"MA", navn:"Mette",    gns:9.6,  kval:4,  ansøgninger:[{prio:1,udbud:"B",grupper:[10]},{prio:2,udbud:"A",grupper:[10]}] },
+  { id:"NA", navn:"Niels",    gns:9.4,  kval:32, ansøgninger:[{prio:1,udbud:"C",grupper:[10]},{prio:2,udbud:"A",grupper:[10,60]}] },
+  { id:"OA", navn:"Olivia",   gns:9.2,  kval:33,  ansøgninger:[{prio:1,udbud:"C",grupper:[10]},{prio:2,udbud:"A",grupper:[10,20]}] },
+  { id:"P", navn:"Peter",    gns:9.0,  kval:26, ansøgninger:[{prio:1,udbud:"A",grupper:[10,20]},{prio:2,udbud:"C",grupper:[10]},{prio:3,udbud:"B",grupper:[10,20]}] },
+  { id:"Q", navn:"Qvortrup", gns:8.8,  kval:12, ansøgninger:[{prio:1,udbud:"A",grupper:[33]}] },
+  { id:"R", navn:"Rasmus",   gns:8.6,  kval:7,  ansøgninger:[{prio:1,udbud:"C",grupper:[10,20,60,70]},{prio:2,udbud:"A",grupper:[10]},{prio:3,udbud:"B",grupper:[10,20]}] },
+  { id:"S", navn:"Sofie",    gns:8.6,  kval:13, ansøgninger:[{prio:1,udbud:"C",grupper:[10]},{prio:2,udbud:"A",grupper:[10,20]}] },
+  { id:"T", navn:"Thomas",   gns:8.2,  kval:1,  ansøgninger:[{prio:1,udbud:"A",grupper:[10]},{prio:2,udbud:"C",grupper:[10,20]}] },
+  { id:"U", navn:"Ulla",     gns:8.0,  kval:36, ansøgninger:[{prio:1,udbud:"C",grupper:[30]},{prio:2,udbud:"B",grupper:[30]}] },
+  { id:"V", navn:"Viktor",   gns:7.8,  kval:8, ansøgninger:[{prio:1,udbud:"A",grupper:[10,60]},{prio:2,udbud:"C",grupper:[10]}] },
+  { id:"W", navn:"Winnie",   gns:7.6,  kval:34, ansøgninger:[{prio:1,udbud:"A",grupper:[10]},{prio:2,udbud:"B",grupper:[10,20]}] },
+  { id:"X", navn:"Xavier",   gns:7.4,  kval:2,  ansøgninger:[{prio:1,udbud:"B",grupper:[30,80]},{prio:2,udbud:"A",grupper:[30]},{prio:3,udbud:"C",grupper:[30]}] },
+  { id:"Y", navn:"Yrsa",     gns:7.2,  kval:29, ansøgninger:[{prio:1,udbud:"C",grupper:[10,20]}] },
+  { id:"Z", navn:"Zara",     gns:7.0,  kval:10, ansøgninger:[{prio:1,udbud:"C",grupper:[30,80]},{prio:2,udbud:"A",grupper:[30,80]}] },
+];*/
+
+// ── Vælg hvilket udbud der præsenteres (0 = første, 1 = andet osv.) ──
+const FOKUS_IDX = 0;
+// Ansøgere der er i lodtrækning (lige ved en K1-grænsekvotient). Sættes i generateStaticSlides.
+let LOTTERY_IDS = new Set();
+
+
+const UDBUD = [
+  { id:"A", navn:"Sygeplejerske", ikon:"✚", billede:"🏥", sjovTekst:"Fordi du faktisk ønsker at hjælpe folk – og ser ud som en, der gør det.",
+    grupper:[{ nr:10, kap:5, label:"Kvote 1" },{ nr:20, kap:5, label:"Kvote 2" },{ nr:60, kap:2, label:"K1 standby" },{ nr:70, kap:2, label:"K2 standby" }] },
+  { id:"B", navn:"Jura", ikon:"⚖️", billede:"⚖️", sjovTekst:"Fordi du vil vinde diskussioner ved middagsbordet – og nu få løn for det.",
+    grupper:[{ nr:10, kap:3, label:"Kvote 1" },{ nr:20, kap:4, label:"Kvote 2" },{ nr:60, kap:0, label:"K1 standby" },{ nr:70, kap:0, label:"K2 standby" }] },
+  { id:"C", navn:"Finansøkonom",  ikon:"₿", billede:"💰", sjovTekst:"Fordi penge ikke bare er penge – de er fremtiden, med renter på.",
+    grupper:[{ nr:10, kap:4, label:"Kvote 1" },{ nr:20, kap:4, label:"Kvote 2" },{ nr:60, kap:0, label:"K1 standby" },{ nr:70, kap:0, label:"K2 standby" }] },
+];
+
+const MOTIVATION = {
+  A:"Jeg er god til at argumentere. Det har min familie bekraeftet ufrivilligt i aarevis.",
+  B:"Hellere advokat end sygeplejerske. Jeg kan ikke lide blod.",
+  C:"Min droem er et kontor med store vinduer og en vigtig titel paa doeren.",
+  D:"Penge og paragraffer - det er i bund og grund det samme, bare med forskellig lugt.",
+  E:"Jeg vil redde liv. Eller i hvert fald min pensionsopsparing.",
+  F:"Jeg er god til Excel og daarlig til at acceptere et nej.",
+  G:"Tre prioriteter - fordi en er for lidt og fire ville ligne desperation.",
+  H:"Jeg soeger kun Finansoekonom. Jeg er ikke til backup-planer.",
+  I:"Det vigtigste for mig er at komme ind et sted. Jeg er meget fleksibel.",
+  M:"Jeg vil baere hvid kittel. Det er hele motivationen. Intet andet.",
+  O:"Jeg er aaben for absolut alt. Det er en styrke, ikke mangel paa retning.",
+};
+</script>
+
+<div class="ppt-nav" id="pptNav">
+  <button id="pptPrevBtn" onclick="navigate(-1)">←</button>
+  <div class="ppt-nav-counter" id="pptCounter"></div>
+  <button id="pptNextBtn" onclick="navigate(1)">→</button>
+  <!-- <button onclick="toggleLayout()" class="ppt-layout-btn" id="pptLayoutBtn" title="Skift layout">⊞</button> -->
+</div>
+
+<div class="slide-viewport" id="slideViewport"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     ALGORITME + RENDERING
+     ══════════════════════════════════════════════════════ -->
+<script>
+// ── HJÆLPERE ──────────────────────────────────────────────────
+function ansInfo(id) { return ANSØGERE.find(a => a.id === id); }
+function udbudInfo(id) { return UDBUD.find(u => u.id === id); }
+function sKey(uddId, grpNr) { return `${uddId}|${grpNr}`; }
+
+// Sortering: K1-grupper (10,60) → gns faldende; K2-grupper → kval faldende
+function rankField(grpNr) { return [10,60].includes(grpNr) ? 'gns' : 'kval'; }
+function sortByRank(ids, grpNr) {
+  const f = rankField(grpNr);
+  const isK1 = grpNr === 10 || grpNr === 60;
+  return [...ids].sort((a,b) => {
+    const diff = (ansInfo(b)?.[f]??0) - (ansInfo(a)?.[f]??0);
+    if (diff !== 0) return diff;
+    return isK1 ? (ansInfo(a)?._rang??0) - (ansInfo(b)?._rang??0) : 0;
+  });
+}
+
+// Hvilke pools er permanent lukkede (ingen ledige pladser nogen steder i poolen).
+// Bruges af renderingen til at afgøre om en plads er endeligt laast (logo vs. aaben).
+function beregnLukkedePools(placed, kap) {
+  const POOLS = [[10,20],[60,70]];
+  const lukket = new Set(); // "uddId|grpNr" er lukket hvis hele poolen er fuld
+  for (const [uddId, grps] of Object.entries(kap)) {
+    for (const pool of POOLS) {
+      let totalKap = 0, totalPlaceret = 0;
+      for (const grpNr of pool) {
+        const k = grps[grpNr] ?? 0;
+        totalKap += k;
+        totalPlaceret += Object.values(placed).filter(p=>p.udbudId===uddId&&p.gruppeNr===grpNr).length;
+      }
+      // Hele poolen er lukket: ingen ledige pladser nogen steder i poolen
+      if (totalKap > 0 && totalPlaceret >= totalKap) {
+        for (const grpNr of pool) {
+          if ((grps[grpNr] ?? 0) > 0) lukket.add(sKey(uddId, grpNr));
+        }
+      }
+    }
+  }
+  return lukket;
+}
+
+// Fælles hjælpefunktion: er ansøger definitvt låst på sin nuværende plads?
+// Tjekker om alle bedre prioriteter er i lukkede pools
+function erEndeligLaast(id, uddId, grpNr) {
+  const info = ansInfo(id);
+  if (!info) return true;
+  const cs = window._closedSlots || new Set();
+  const currAnsoeg = info.ansøgninger.find(a => a.udbud===uddId && a.grupper.includes(grpNr));
+  const currPrio = currAnsoeg?.prio ?? 999;
+  return !info.ansøgninger.some(a => {
+    for (const g of a.grupper) {
+      const bedre = a.prio < currPrio || (a.prio===currPrio && g < grpNr);
+      if (bedre && !cs.has(sKey(a.udbud, g))) return true;
+    }
+    return false;
+  });
+}
+
+// ── RENDERING ─────────────────────────────────────────────────
+// Fælles tooltip (navn · snit · kval · prioriteter) — bruges på avatarer OG i afvist-boksen.
+function avatarTip(id) {
+  const info = ansInfo(id);
+  if (!info) return `Ansøger ${id}`;
+  const prios = info.ansøgninger.slice().sort((a,b)=>a.prio-b.prio)
+    .map(p => { const u = udbudInfo(p.udbud); return `${p.prio}. ${u?u.navn:p.udbud} (${p.grupper.join(',')})`; })
+    .join('\n');
+  const uid = UDBUD[FOKUS_IDX].id;
+  const grps = info.ansøgninger.filter(a=>a.udbud===uid).flatMap(a=>a.grupper);
+  const dele = [];
+  if (grps.some(g=>g===10||g===60)) dele.push(`snit ${info.gns.toFixed(1).replace('.',',')}`);
+  if (grps.some(g=>g===20||g===70)) dele.push(`rangeringsnr. #${kvoteRang(id)}`);
+  return `${info.navn}${dele.length ? ' — ' + dele.join(' · ') : ''}\n${prios}`;
+}
+
+// Kvote 2-rangeringsnummer: højeste kval-point => nr. 1 (øverst). Sorteringen er uændret;
+// kun det viste TAL ændres fra rå kval-point til rangeringsnummer.
+let _k2RangCache = null;
+function kvoteRang(id) {
+  if (!_k2RangCache) {
+    const uid = UDBUD[FOKUS_IDX].id;
+    const pool = ANSØGERE.filter(a => a.ansøgninger.some(x => x.udbud===uid && x.grupper.some(g=>g===20||g===70)));
+    pool.sort((a,b)=> b.kval - a.kval || (a._rang ?? 0) - (b._rang ?? 0));
+    _k2RangCache = {};
+    pool.forEach((a,i)=> _k2RangCache[a.id] = i+1);
+  }
+  return _k2RangCache[id] ?? '–';
+}
+
+// ── MEEPLE ─────────────────────────────────────────────────────
+// Farver pr. ansøger (spejler .ans-X i CSS — bruges som meeple-fill).
+const MEEPLE_FARVER = {
+  A:'#E11D48', B:'#2563EB', C:'#16A34A', D:'#D97706', E:'#7C3AED', F:'#DB2777',
+  G:'#0D9488', H:'#EA580C', I:'#4F46E5', J:'#059669', K:'#B45309', L:'#C026D3',
+  M:'#0284C7', N:'#9333EA', O:'#DC2626', P:'#65A30D', Q:'#475569', R:'#BE123C',
+  S:'#1D4ED8', T:'#047857', U:'#A21CAF', V:'#C2410C', W:'#6D28D9', X:'#0369A1',
+  Y:'#15803D', Z:'#4E5D6C'
+};
+const MEEPLE_PATH = "M40 5 C48 5 55 10 57 18 L73 28 C77 30 77 36 73 38 L58 48 L64 70 C65 75 60 79 55 76 L40 64 L25 76 C20 79 15 75 16 70 L22 48 L7 38 C3 36 3 30 7 28 L23 18 C25 10 32 5 40 5 Z";
+
+// Hvilket tal vises på meeplen: Kvote 1 => karaktergennemsnit, Kvote 2 => rangeringsnummer.
+// Uden gruppe-kontekst (fx afvist-boks): snit hvis ansøger søger Kvote 1, ellers rangeringsnr.
+function meepleTal(id, grpNr) {
+  const info = ansInfo(id);
+  if (!info) return '';
+  let k2;
+  if (grpNr === 20 || grpNr === 70) k2 = true;
+  else if (grpNr === 10 || grpNr === 60) k2 = false;
+  else {
+    const uid = UDBUD[FOKUS_IDX].id;
+    const grps = info.ansøgninger.filter(a=>a.udbud===uid).flatMap(a=>a.grupper);
+    const søgerK1 = grps.some(g=>g===10||g===60);
+    k2 = !søgerK1 && grps.some(g=>g===20||g===70);
+  }
+  return k2 ? `#${kvoteRang(id)}` : info.gns.toFixed(1).replace('.',',');
+}
+
+// Selve meeple-figuren (farvet krop, hvid kant) med bogstav + ét tal.
+// Guldkant når pladsen er endelig (lukket lås).
+function meepleSVG(id, grpNr, status, opts={}) {
+  const fill = MEEPLE_FARVER[id] || '#64748b';
+  const tal  = meepleTal(id, grpNr);
+  const idFont = id.length > 1 ? 17 : 24;
+  const kant = opts.gold ? '#FFC21A' : '#ffffff';
+  const kantBredde = opts.gold ? 5 : 3.5;
+  return `<svg class="meeple" viewBox="0 0 80 80" preserveAspectRatio="xMidYMid meet">`
+       + `<path d="${MEEPLE_PATH}" fill="${fill}" stroke="${kant}" stroke-width="${kantBredde}"/>`
+       + `<text x="40" y="43" class="meeple-id" style="font-size:${idFont}px">${id}</text>`
+       + (tal ? `<text x="40" y="61" class="meeple-num">${tal}</text>` : '')
+       + `</svg>`;
+}
+
+function avatarHTML(entry, grpNr, uddId, opts={}) {
+  if (entry.tom) { const nyKls = entry.ny ? ' ny-plads' : ''; return `<div class="tom-plads${nyKls}" title="Ledig plads">🪑</div>`.repeat(entry.tom); }
+  const info = ansInfo(entry.id);
+  const vilRykke = (opts.vilRykkeIds?.has(entry.id) && entry.status==='uændret') ? 'vil-rykke' : '';
+  const cls = `avatar meeple-avatar ans-${entry.id} ${entry.status||''} ${vilRykke}`;
+  const tip = avatarTip(entry.id);
+  let lock = '';
+  let endelig = false;
+  if (entry.status === 'midlertidig') {
+    // Midlertidig placering: lille ⏳-mærke (som hængelåsen) + dæmpet (60%).
+    lock = `<span class="avatar-lock avatar-vent" title="Midlertidig placering i denne runde">&#9203;</span>`;
+  }
+  if (info && uddId && (entry.status==='optaget' || entry.status==='uændret')) {
+    let showEndelig;
+    if (entry.endelig) {
+      showEndelig = true;
+    } else {
+      // Find nuværende prioritet for denne placering
+      const currAnsoeg = info.ansøgninger.find(a => a.udbud===uddId && a.grupper.includes(grpNr));
+      const currPrio = currAnsoeg?.prio ?? 999;
+      const currGrp  = grpNr;
+      // Højere prioriteter = samme udbud lavere grp, eller lavere prio-nummer
+      const cs = window._closedSlots || new Set();
+      const hasBetterOpen = info.ansøgninger.some(a => {
+        for (const g of a.grupper) {
+          const isBetter = a.prio < currPrio || (a.prio===currPrio && g < currGrp);
+          if (isBetter && !cs.has(`${a.udbud}|${g}`)) return true;
+        }
+        return false;
+      });
+      showEndelig = !hasBetterOpen;
+    }
+    endelig = showEndelig;
+    // En standby-plads (grp 60/70) er ALDRIG en endelig placering:
+    // ingen lukket lås, ingen guldkant — kun en sikker (åben) plads.
+    if (grpNr === 60 || grpNr === 70) { showEndelig = false; endelig = false; }
+    lock = `<span class="avatar-lock" title="${showEndelig ? 'Endelig plads' : 'Sikker plads'}">${showEndelig ? '&#128274;' : '&#128275;'}</span>`;
+  }
+  const klasser = `${cls}${endelig ? ' endelig' : ''}`;
+  // 🎲 Lodtrækning: ansøgere der er lige ved en K1-grænsekvotient (grp 10/60).
+  let terning = '';
+  if ((grpNr === 10 || grpNr === 60) && LOTTERY_IDS.has(entry.id)) {
+    terning = `<span class="avatar-terning" title="Lodtrækning – samme karakter som grænsekvotienten">&#127922;</span>`;
+  }
+  return `<div class="${klasser}" title="${tip}" style="position:relative;">${terning}${lock}${meepleSVG(entry.id, grpNr, entry.status, { gold: endelig })}</div>`;
+}
+// Sortér optagne/kø: rang-felt (gns/kval) faldende; LIGHED brydes på
+// lodtrækningsnummeret (_rang) stigende — samme rækkefølge i alle runder.
+function cmpRank(grpNr) {
+  const f = rankField(grpNr);
+  return (a, b) => {
+    const d = (ansInfo(b.id)?.[f] ?? 0) - (ansInfo(a.id)?.[f] ?? 0);
+    return d !== 0 ? d : (ansInfo(a.id)?._rang ?? 0) - (ansInfo(b.id)?._rang ?? 0);
+  };
+}
+function sortSlotEntries(entries, grpNr) {
+  const opt  = entries.filter(e=>!e.tom).sort(cmpRank(grpNr));
+  const toms = entries.filter(e=>e.tom);
+  return [...opt, ...toms];
+}
+
+
+function clearingSlotHTML(entries, kv, grpNr, uddId) {
+  const opt  = entries.filter(e=>!e.tom).sort(cmpRank(grpNr));
+  const toms = entries.filter(e=>e.tom);
+  return [...opt, ...toms].map(e=>avatarHTML(e,grpNr,uddId)).join('');
+}
+
+// Tegner kapaciteten som kv lysegrå "pladsfelter": de første kv pladser (uanset om
+// de er fyldt med ansøger, en ledig stol eller helt tomme) vises som grå celler.
+// Kø udover kapaciteten tegnes uden celle. Bruges på ALLE slidetyper.
+function renderSlots(entries, kv, grpNr, uddId, opts={}) {
+  const opt  = entries.filter(e=>!e.tom).sort(cmpRank(grpNr));
+  const toms = entries.filter(e=>e.tom);
+  const flat = [...opt];
+  for (const e of toms) for (let i=0;i<(e.tom||1);i++) flat.push({tom:1, ny: opts.nyPlads || e.ny});
+  // Aldrig mere end MAX pladser på én række: vis 13 + "+N" hvis der er flere.
+  const MAX = 14;
+  let visible = flat, skjult = 0;
+  if (flat.length > MAX) { visible = flat.slice(0, MAX - 1); skjult = flat.length - (MAX - 1); }
+  let out = '';
+  for (let i=0; i<kv; i++) {
+    const e = (i < visible.length) ? visible[i] : null;
+    out += `<div class="kap-celle">${e ? avatarHTML(e, grpNr, uddId, opts) : ''}</div>`;
+  }
+  for (let i=kv; i<visible.length; i++) out += avatarHTML(visible[i], grpNr, uddId, opts);
+  if (skjult > 0) out += `<div class="ko-mere" title="${skjult} flere i kø ud over de viste">+${skjult}</div>`;
+  return out;
+}
+
+// Midlertidig: tegner avatarer i rang-rækkefølge og indsætter en
+// kapacitetsgrænse efter den kv'te ansøger, hvis der er flere end pladser.
+function midlertidigSlotHTML(entries, kv, grpNr, uddId, vilRykkeIds) {
+  const sorted = sortSlotEntries(entries, grpNr);
+  const marker = '<div class="kap-graense"></div>';
+  let out = '', seats = 0, placed = false;
+  for (const e of sorted) {
+    out += avatarHTML(e, grpNr, uddId, {vilRykkeIds});
+    seats += e.tom ? e.tom : 1;
+    if (!placed && seats >= kv) { out += marker; placed = true; }
+  }
+  if (!placed) out += marker;   // færre slots end kapacitet
+  return out;
+}
+
+function legendeHTML(keys) {
+  const defs = {
+    'midlertidig':{cls:'midlertidig',label:'Midlertidig i denne runde'},
+    'pladsflyt':  {cls:'pladsflyt',  label:'Overført kapacitet'},
+    'tom':        {cls:'tom-plads',  label:'Ledig kapacitet'},
+  };
+  if (!keys) return '';
+  const lockItems = `
+    <div class="legend-item">🔒 <span>Endelig plads</span></div>
+    <div class="legend-item">🔓 <span>Sikret plads</span></div>`
+    + (LOTTERY_IDS.size ? `\n    <div class="legend-item">&#127922; <span>Lodtrækning ved grænsekvotient</span></div>` : '');
+  return `<div class="legend">${keys.map(k=>{
+    const d = defs[k]; if (!d) return '';
+    if (k==='tom') return `<div class="legend-item"><span style="font-size:1rem;opacity:0.55;">🪑</span><span>${d.label}</span></div>`;
+    if (k==='midlertidig') return `<div class="legend-item">&#9203; <span>${d.label}</span></div>`;
+    return `<div class="legend-item"><div class="avatar ${d.cls}" style="width:16px;height:16px;font-size:0.5rem;"></div><span>${d.label}</span></div>`;
+  }).join('')}${lockItems}</div>`;
+}
+
+function buildOverblikStats() {
+  let sumP=0, sumA=0;
+  const rows = UDBUD.map(u=>{
+    const p = u.grupper.filter(g=>g.nr===10||g.nr===20).reduce((s,g)=>s+(g.kap||0),0);
+    const a = ANSØGERE.filter(x=>x.ansøgninger.some(ans=>ans.udbud===u.id)).length;
+    sumP+=p; sumA+=a;
+    return `<tr><td style="text-align:left">${u.navn}</td><td style="text-align:right">${p}</td><td style="text-align:right">${a}</td></tr>`;
+  }).join('');
+  return `
+    <table class="stat-tabel">
+      <tbody>
+        <tr style="color:#64748b;"><td style="text-align:left">Antal uddannelser</td><td></td><td style="text-align:right">${UDBUD.length}</td></tr>
+        <tr style="color:#64748b;border-bottom:2px solid #e2e8f0;"><td style="text-align:left">Antal ansøgere i alt</td><td></td><td style="text-align:right">${ANSØGERE.length}</td></tr>
+        <tr style="font-weight:700;color:#0f172a;"><td style="text-align:left">Uddannelse</td><td style="text-align:right">Pladser</td><td style="text-align:right">Ansøgninger</td></tr>
+        ${rows}
+        <tr style="font-weight:700;border-top:1px solid #e2e8f0;"><td style="text-align:left">Ialt</td><td style="text-align:right">${sumP}</td><td style="text-align:right">${sumA}</td></tr>
+      </tbody>
+    </table>`;
+}
+
+function buildSlide(s) {
+  const COLORS = [
+    {hdr:'#2c5282', bg:'#f0f4f8', brd:'#c5d6ea'},
+    {hdr:'#4a6b5d', bg:'#f3f8f5', brd:'#c0d8cc'},
+    {hdr:'#976a43', bg:'#faf6f2', brd:'#e8d5c0'},
+    {hdr:'#5c3d8f', bg:'#f5f0ff', brd:'#d4c0f0'},
+    {hdr:'#1a6b6b', bg:'#f0f8f8', brd:'#b8dada'},
+  ];
+
+  // Beregn én gang for hele slide (ikke per udbud-sektion)
+  {
+    const placedFromSlide = {};
+    const kapFromSlide = {};
+    for (const ud2 of s.udbud) {
+      kapFromSlide[ud2.udbudId] = {};
+      for (const [k,v] of Object.entries(ud2.kap||{})) kapFromSlide[ud2.udbudId][+k]=v;
+      for (const grp2 of (udbudInfo(ud2.udbudId)?.grupper||[])) {
+        for (const e of (ud2.slots?.[grp2.nr]||[])) {
+          if (!e.tom && (e.status==='optaget'||e.status==='uændret'))
+            placedFromSlide[e.id] = {udbudId:ud2.udbudId, gruppeNr:grp2.nr};
+        }
+      }
+    }
+    window._closedSlots = beregnLukkedePools(placedFromSlide, kapFromSlide);
+  }
+
+  const vilRykkeIds = new Set();
+  if (s.slideType === 'midlertidig') {
+    for (const ud2 of s.udbud) {
+      for (const [grpNrStr, slotEntries] of Object.entries(ud2.slots || {})) {
+        const grpNr2 = +grpNrStr;
+        const kv2 = ud2.kap?.[grpNr2] ?? (udbudInfo(ud2.udbudId)?.grupper.find(g=>g.nr===grpNr2)?.kap ?? 0);
+        const uæ2 = slotEntries.filter(e=>!e.tom && e.status==='uændret');
+        const mid2ids = sortByRank(
+          slotEntries.filter(e=>!e.tom && e.status==='midlertidig').map(e=>e.id), grpNr2);
+        const visMid2 = mid2ids.slice(0, Math.max(0, Math.max(kv2, uæ2.length) - uæ2.length));
+        for (const id of visMid2) vilRykkeIds.add(id);
+      }
+    }
+  }
+
+  const sections = s.udbud.map(ud=>{
+    const udata  = udbudInfo(ud.udbudId);
+    const udIdx  = UDBUD.indexOf(udata);
+    const col    = COLORS[udIdx % COLORS.length];
+
+    const grpRows = udata.grupper.filter(grp =>
+      grp.kap > 0
+    ).map((grp,idx)=>{
+      const kv      = ud.kap?.[grp.nr] ?? grp.kap;
+      const nulKap  = kv === 0;
+      const entries = ud.slots?.[grp.nr] || [];
+      const effectiveKv = entries.length;
+      const badge   = ud.badges?.[grp.nr];
+      const nyPlads = s.slideType === 'pladsflyt' && badge?.startsWith('+');
+      const slotsHTML = renderSlots(entries, kv, grp.nr, ud.udbudId,
+        { vilRykkeIds: (s.slideType==='midlertidig' ? vilRykkeIds : undefined), nyPlads });
+
+      const gkvVal  = s.visStatus && ud.gkv?.[grp.nr];
+      const koeValResult = s.slideType === 'result' ? (ud.koePerGrp?.[grp.nr] ?? 0) : 1;
+      const isK1type = grp.nr === 10 || grp.nr === 60;
+
+      // Lodtrækning: K1-gruppe lukket, og første i kø har samme gns som GK
+      let lodtrækningHTML = '';
+      let harLodtrækning = false;
+      if (gkvVal && (grp.nr === 10 || grp.nr === 60)) {
+        const placedIds = new Set(entries.filter(e=>!e.tom).map(e=>e.id));
+        const gkvNum = parseFloat(gkvVal.replace(',','.'));
+        const firstKø = ANSØGERE
+          .filter(a => !placedIds.has(a.id) &&
+                       a.ansøgninger.some(ans => ans.udbud===ud.udbudId && ans.grupper.includes(grp.nr)))
+          .sort((a,b) => b.gns - a.gns)[0];
+        if (firstKø && Math.abs(firstKø.gns - gkvNum) < 0.001) {
+          harLodtrækning = true;
+          const tabte = ANSØGERE
+            .filter(a => !placedIds.has(a.id) &&
+                         a.ansøgninger.some(ans => ans.udbud===ud.udbudId && ans.grupper.includes(grp.nr)) &&
+                         Math.abs(a.gns - gkvNum) < 0.001)
+            .map(a => a.id).join(', ');
+          lodtrækningHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:700;color:#7c3aed;">LODTRÆKNING (${tabte})</span>`;
+        }
+      }
+      // Ved lodtrækning lægges 0,1 til GK (den viste grænse er inklusiv vinderen)
+      const gkvVis = (gkvVal && harLodtrækning)
+        ? (parseFloat(gkvVal.replace(',','.')) + 0.1).toFixed(1).replace('.', ',')
+        : gkvVal;
+      const gkvHTML = (gkvVal && koeValResult > 0 && isK1type)
+        ? `<span style="font-size:0.62rem;color:#64748b;margin-left:8px;">GK: <strong>${gkvVis}</strong></span>` : '';
+      const aktivEntries = entries.filter(e => !e.tom);
+      const køCount = Math.max(0, aktivEntries.length - kv);
+      // Ekstra tekst varierer efter slidetype — Lukket går forud for alt
+      const slotKey2 = `${ud.udbudId}|${grp.nr}`;
+      const optCount2 = entries.filter(e=>!e.tom&&(e.status==='optaget'||e.status==='uændret')).length;
+      const harLedigeP = optCount2 < kv;
+      const poolLukket = window._closedSlots?.has(slotKey2);
+      const alleLaaste = poolLukket && entries
+        .filter(e=>!e.tom&&(e.status==='optaget'||e.status==='uændret'))
+        .every(e=>erEndeligLaast(e.id, ud.udbudId, grp.nr));
+
+      let ekstraHTML = '';
+      if (!s.slideType || s.slideType === 'tom') {
+        ekstraHTML = '';
+      } else if (!harLedigeP && alleLaaste && s.slideType === 'result') {
+        const lukketKøVal = ud.koePerGrp?.[grp.nr] ?? 0;
+        const lukketTxt = lukketKøVal > 0 ? 'ALLE OPTAGET (KØ)' : 'ALLE OPTAGET';
+        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:600;color:#64748b;">${lukketTxt}</span>`;
+      } else if (s.slideType === 'midlertidig') {
+        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">Ansøgninger ialt: ${aktivEntries.length}</span>`;
+      } else if (s.slideType === 'result') {
+        const koeVal = ud.koePerGrp?.[grp.nr] ?? 0;
+        let koeTxt = '';
+        if (koeVal > 0 && !harLedigeP) koeTxt = 'ALLE OPTAGET (KØ)';
+        else if (koeVal > 0)            koeTxt = `ANSØGERE I KØ: ${koeVal}`;
+        else if (kv === 0)              koeTxt = '';
+        else if (optCount2 === 0)       koeTxt = 'Ingen optaget';
+        else if (optCount2 >= kv)       koeTxt = 'ALLE OPTAGET';
+        else                            koeTxt = 'LEDIGE PLADSER';
+        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:600;color:#64748b;">${koeTxt}</span>`;
+      } else if (s.slideType === 'pladsflyt') {
+        ekstraHTML = '';
+      } else {
+        // clearing
+        if (harLedigeP) {
+          ekstraHTML = '';
+        } else {
+          const realKø = ud.køMap?.[grp.nr] ?? køCount;
+          const koeTxt = realKø > 0 ? `Ansøgere i kø: ${realKø}` : 'Ingen kø';
+          ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">${koeTxt}</span>`;
+        }
+      }
+
+      return `
+        <div class="group-row${nulKap ? ' nul-kapacitet' : ''}" data-grp="${grp.nr}">
+          <div class="group-row-header" style="color:${col.hdr};">
+            <span>${idx===0?'🎓':'🛠️'}</span> ${grp.label}
+            <span data-kap style="margin-left:8px;font-size:0.62rem;font-weight:600;color:#64748b;">Kapacitet: ${kv}</span>
+            ${nulKap ? '<span class="nul-pladser-badge" title="Alle pladser er flyttet til den anden gruppe i poolen">&#8856; 0 pladser</span>' : ''}
+            ${ekstraHTML}
+            ${badge?`<span class="${badge.startsWith('+')?'plus-badge':'minus-badge'}" style="margin-left:4px;">${badge}</span>`:''}
+            ${gkvHTML}
+            ${lodtrækningHTML}
+          </div>
+          <div class="group-row-slots">${nulKap && !entries.some(e=>!e.tom) ? '<span class="nul-pladser-tekst">Kapacitet flyttet — ingen pladser i denne runde</span>' : slotsHTML}</div>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="edu-section" style="border-color:${col.brd};">
+        <div class="edu-section-header" style="background:${col.bg};color:${col.hdr};">
+          <span class="ikon">${udata.ikon||'📚'}</span>
+          ${udata.navn}
+        </div>
+        ${grpRows}
+      </div>`;
+  }).join('');
+
+  let rejectedHTML = '';
+  if (s.afviste?.length) {
+    const avatars = s.afviste.map(id=>{
+      return avatarHTML({id, status:'afvist'}, undefined, undefined);
+    }).join('');
+    rejectedHTML = `
+      <div class="rejected-box">
+        <div class="rejected-header">Ansøgere uden tilbud</div>
+        <div class="rejected-slots">${avatars}</div>
+      </div>`;
+  }
+
+  // Beregn hvem der ikke har sikker plads på dette trin
+  const placeredeIds = new Set();
+  for (const ud of s.udbud) {
+    const udata2 = udbudInfo(ud.udbudId);
+    for (const grp of udata2.grupper) {
+      for (const e of (ud.slots?.[grp.nr]||[])) {
+        if (!e.tom && (e.status==='optaget'||e.status==='uændret')) placeredeIds.add(e.id);
+      }
+    }
+  }
+  const fløjetSet = new Set(s.fløjet||[]);
+  const ikkeplacerede = ANSØGERE.filter(a=>!placeredeIds.has(a.id) && !fløjetSet.has(a.id));
+  const ikkeBar = (!s.visStatus && s.slideType && s.slideType !== 'tom' && !(s.slideType==='midlertidig' && s.runde===1)) ? `
+    <div class="ikke-placeret-bar">
+      <span class="ikke-placeret-label">Ikke placeret</span>
+      <div class="ikke-placeret-slots">
+        ${ikkeplacerede.length === 0
+          ? '<span style="font-size:0.65rem;color:#a3e635;font-weight:600;">Alle placeret ✓</span>'
+          : ikkeplacerede.map(a=>`<div class="avatar-mini ans-${a.id}" title="${a.navn}">${a.id}</div>`).join('')
+        }
+      </div>
+    </div>` : '';
+
+  // Statistik-modal til slutresultat
+  let modalHTML = '';
+  if (s.visStatus) {
+    const placedList = [], standbyList = [];
+    const tomTotal = { count: 0 };
+    const STANDBY_GRPS = [60, 70];
+    for (const ud of s.udbud) {
+      const udata2 = udbudInfo(ud.udbudId);
+      for (const grp of udata2.grupper) {
+        for (const e of (ud.slots?.[grp.nr]||[])) {
+          if (e.tom) { tomTotal.count += e.tom; continue; }
+          if (e.status === 'optaget') {
+            const a = ansInfo(e.id);
+            const prio = a?.ansøgninger.find(ansoeg =>
+              ansoeg.udbud===ud.udbudId && ansoeg.grupper.includes(grp.nr))?.prio ?? '?';
+            if (STANDBY_GRPS.includes(grp.nr)) standbyList.push({id:e.id, prio});
+            else                                 placedList.push({id:e.id, prio});
+          }
+        }
+      }
+    }
+    const prioMap = {};
+    for (const p of [...placedList, ...standbyList]) prioMap[p.prio] = (prioMap[p.prio]||0)+1;
+    const prioRows = Object.keys(prioMap).sort((a,b)=>a-b)
+      .map(p=>`<tr><td>Optaget på ${p}. prioritet</td><td>${prioMap[p]}</td></tr>`).join('');
+    const afvistCount = s.afviste?.length ?? 0;
+    const afvisteAvatars = (s.afviste||[])
+      .map(id => `<div class="avatar ans-${id} afvist" title="${ansInfo(id)?.navn||id}" style="width:28px;height:28px;font-size:0.68rem;">${id}</div>`)
+      .join('');
+    modalHTML = `
+      <div class="stat-modal-backdrop" id="statModal">
+        <div class="stat-modal">
+          <div class="stat-modal-header">
+            <h2>📊 Endelig fordeling</h2>
+            <button class="stat-modal-luk" onclick="lukStatModal('statModal')">✕</button>
+          </div>
+          <div class="stat-modal-body">
+            <table class="stat-tabel">
+              <tr><td>Direkte optaget</td><td>${placedList.length}</td></tr>
+              <tr><td>Standby</td><td>${standbyList.length}</td></tr>
+              ${s.fløjet?.length ? `<tr><td>Optaget på andet udbud</td><td>${s.fløjet.length}</td></tr>` : ''}
+              <tr><td>Afvist</td><td>${afvistCount}</td></tr>
+              <tr><td>Ledige pladser</td><td>${tomTotal.count}</td></tr>
+              <tr class="stat-sep"><td colspan="2">Fordeling på prioriteter</td></tr>
+              ${prioRows}
+            </table>
+          </div>
+          ${afvistCount > 0 ? `
+          <div class="stat-afviste">
+            <div class="stat-afviste-label">Afviste ansøgere</div>
+            <div class="stat-afviste-slots">${afvisteAvatars}</div>
+          </div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  return `
+    <div class="slide-header">
+      <h1>${s.titel}</h1>
+      <div style="display:flex;align-items:center;gap:12px;">
+        ${s.visOverblik ? `<button class="stat-knap" onclick="aabnOverblik()">📊 Overblik</button>` : ''}
+        ${s.visStatus ? `<button class="stat-knap" onclick="visStatModal('statModal')">📊 Vis statistik</button>` : ''}
+      </div>
+    </div>
+    ${modalHTML}
+    ${s.visOverblik ? `
+    <div class="overblik-overlay">
+      <div class="stat-modal">
+        <div class="stat-modal-header">
+          <h2>📊 Overblik</h2>
+          <button class="stat-modal-luk" onclick="lukOverblik()">✕</button>
+        </div>
+        <div class="stat-modal-body">${buildOverblikStats()}</div>
+      </div>
+    </div>` : ''}
+    <div class="slide-body">
+      <div class="edu-sections">${sections}${UDBUD.length < 4 ? `
+        <div class="edu-placeholder">
+          <div class="edu-placeholder-inner">
+            <div class="edu-placeholder-titel">Ny uddannelse på vej</div>
+            <div class="edu-placeholder-sub">Åbner snart!</div>
+            <div class="edu-placeholder-tekst">Vi arbejder på at tilføje endnu en spændende uddannelse til KOT-fordelingen.</div>
+          </div>
+        </div>` : ''}</div>
+      ${rejectedHTML}
+      ${legendeHTML(s.legende)}
+      ${ikkeBar}
+    </div>`;
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────
+let current = 0;
+let SLIDES = [];
+
+
+// ── PRÆSENTATION ──────────────────────────────────────────
+// Hele visningen kører i præsentationstilstand: slide-viewporten
+// skaleres til at fylde skærmen, og kun bund-overlayet vises.
+function toggleLayout() {
+  document.body.classList.toggle('layout-h');
+  setTimeout(scalePPT, 50);
+}
+
+function scalePPT() {
+  const vp = document.getElementById('slideViewport');
+  // Nulstil før måling
+  vp.style.transform = '';
+  vp.style.width = '';
+  vp.style.height = '';
+  vp.style.left = '0';
+  vp.style.top = '0';
+  // visualViewport giver præcise mål på iOS (ekskl. adresselinje)
+  const vw = window.visualViewport?.width  || window.innerWidth;
+  const vh = window.visualViewport?.height || window.innerHeight;
+  const nw = vp.offsetWidth  || 1024;
+  const nh = vp.offsetHeight || 576;
+  const scale = Math.min(vw / nw, vh / nh) * 0.97;
+  vp.style.width  = nw + 'px';
+  vp.style.height = nh + 'px';
+  vp.style.left   = Math.round((vw - nw * scale) / 2) + 'px';
+  vp.style.top    = Math.round((vh - nh * scale) / 2) + 'px';
+  vp.style.transformOrigin = 'top left';
+  vp.style.transform = `scale(${scale})`;
+}
+
+function updatePPTNav() {
+  document.getElementById('pptCounter').textContent = `${current+1} / ${SLIDES.length}`;
+  document.getElementById('pptPrevBtn').disabled = current === 0;
+  document.getElementById('pptNextBtn').disabled = current === SLIDES.length - 1;
+}
+
+window.addEventListener('resize', scalePPT);
+window.visualViewport?.addEventListener('resize', scalePPT);
+
+
+
+
+// Ét fyrværkeri-burst på (cx,cy)
+function fyrvkBurst(cx, cy, count) {
+  const colors = ['#f59e0b','#ef4444','#3b82f6','#10b981','#8b5cf6','#ec4899','#06b6d4','#f97316'];
+  const shapes = ['50%','3px'];
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'fyrvk-particle';
+      const angle = Math.random()*Math.PI*2;
+      const dist  = 60 + Math.random()*190;
+      const dx = Math.cos(angle)*dist;
+      const dy = Math.sin(angle)*dist - 40;
+      el.style.cssText = `
+        left:${cx}px; top:${cy}px;
+        background:${colors[Math.floor(Math.random()*colors.length)]};
+        border-radius:${shapes[Math.random()<0.6?0:1]};
+        width:${5+Math.random()*7}px; height:${5+Math.random()*7}px;
+        --dx:${dx}px; --dy:${dy}px;
+        animation: fyrvkFly ${0.8+Math.random()*0.8}s ease-out forwards;`;
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(), 1800);
+    }, Math.random()*180);
+  }
+}
+
+function fyrvkeri() {
+  const colors = ['#f59e0b','#ef4444','#3b82f6','#10b981','#8b5cf6','#ec4899','#06b6d4','#f97316'];
+  const shapes = ['50%','3px'];
+  const cx = window.innerWidth/2, cy = window.innerHeight/2;
+  const N = 60;
+  for (let i = 0; i < N; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'fyrvk-particle';
+      const angle = (Math.random()*360) * Math.PI/180;
+      const dist  = 80 + Math.random()*220;
+      const dx = Math.cos(angle)*dist + (Math.random()-0.5)*60;
+      const dy = Math.sin(angle)*dist - Math.random()*100;
+      el.style.cssText = `
+        left:${cx + (Math.random()-0.5)*80}px;
+        top:${cy + (Math.random()-0.5)*40}px;
+        background:${colors[Math.floor(Math.random()*colors.length)]};
+        border-radius:${shapes[Math.random()<0.6?0:1]};
+        width:${5+Math.random()*7}px;
+        height:${5+Math.random()*7}px;
+        --dx:${dx}px; --dy:${dy}px;
+        animation: fyrvkFly ${0.8+Math.random()*0.8}s ease-out forwards;`;
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(), 1800);
+    }, Math.random()*600);
+  }
+  // Repeat once more for a double burst
+  setTimeout(() => {
+    for (let i = 0; i < 30; i++) {
+      setTimeout(() => {
+        const el = document.createElement('div');
+        el.className = 'fyrvk-particle';
+        const angle = (Math.random()*360)*Math.PI/180;
+        const dist  = 50 + Math.random()*180;
+        el.style.cssText = `
+          left:${cx + (Math.random()-0.5)*200}px;
+          top:${cy + (Math.random()-0.5)*80}px;
+          background:${colors[Math.floor(Math.random()*colors.length)]};
+          border-radius:50%;
+          width:${4+Math.random()*6}px; height:${4+Math.random()*6}px;
+          --dx:${Math.cos(angle)*dist}px; --dy:${Math.sin(angle)*dist-60}px;
+          animation: fyrvkFly ${0.7+Math.random()*0.7}s ease-out forwards;`;
+        document.body.appendChild(el);
+        setTimeout(()=>el.remove(), 1600);
+      }, Math.random()*400);
+    }
+  }, 900);
+}
+
+// Farvel-puls på KUN de midlertidige placeringer når man forlader en
+// midlertidig-side (de blinker/udvides et par gange før clearing vises).
+function animerMidlertidigUd(done) {
+  const slide = document.querySelector('.slide.active');
+  if (!slide) { done(); return; }
+  const avs = [...slide.querySelectorAll('.group-row-slots .avatar.midlertidig')];
+  if (!avs.length) { done(); return; }
+  avs.forEach(el => { el.style.animation = 'midlBlink 1s ease'; });
+  setTimeout(done, 1020);
+}
+
+// Pulse på de optagne ansøgere når man kommer til en clearing-side.
+// Nyoptagne springes over her — de får deres egen fremhævning (blink + badge).
+function animerClearing() {
+  const slide = document.querySelector('.slide.active');
+  if (!slide) return;
+  const ny = new Set(SLIDES[current]?.nyoptaget || []);
+  const erNy = el => [...ny].some(id => el.classList.contains('ans-' + id));
+  const avs = [...slide.querySelectorAll('.group-row-slots .avatar.optaget')].filter(el => !erNy(el));
+  avs.forEach((el, i) => {
+    setTimeout(() => {
+      if (!slide.classList.contains('active') || !el.isConnected) return;
+      el.style.animation = 'placerPuls 0.7s ease';
+      setTimeout(() => { if (el.isConnected) el.style.animation = ''; }, 760);
+    }, 200 + i * 80);
+  });
+}
+
+// Nyoptagne (lige kommet ind på en ledig plads): ét blink + "Nyoptaget"-mærke
+// der toner ud og svæver opad.
+function animerNyoptaget(slide) {
+  const dom = document.querySelector('.slide.active');
+  if (!dom || !slide.nyoptaget?.length) return;
+  const stadigAktiv = () => dom.classList.contains('active');
+  slide.nyoptaget.forEach((mv, i) => {
+    setTimeout(() => {
+      if (!stadigAktiv()) return;
+      const av = dom.querySelector(`.group-row-slots .avatar.ans-${mv.id}`);
+      if (!av) return;
+      // Ét tydeligt blink
+      av.style.animation = 'nyoptagetBlink 0.75s ease';
+      setTimeout(() => { if (av.isConnected) av.style.animation = ''; }, 800);
+      // Mærke der toner ud og svæver opad — tekst alt efter type
+      const r = av.getBoundingClientRect();
+      const badge = document.createElement('div');
+      badge.className = `nyoptaget-badge${mv.op ? ' rykket-op' : ''}`;
+      badge.textContent = mv.op ? 'Rykket op' : 'Nyoptaget';
+      badge.style.left = (r.left + r.width / 2) + 'px';
+      badge.style.top  = (r.top - 4) + 'px';
+      document.body.appendChild(badge);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        badge.style.transition = 'opacity 1.9s ease, transform 1.9s ease';
+        badge.style.opacity = '0';
+        badge.style.transform = 'translate(-50%, -100%) translateY(-22px)';
+      }));
+      setTimeout(() => badge.remove(), 2050);
+    }, 550 + i * 600);
+  });
+}
+
+function animerStabil() {
+  const slide = document.querySelector('.slide.active');
+  if (!slide) return;
+  const overlay = document.createElement('div');
+  overlay.className = 'stabil-overlay';
+  overlay.innerHTML = `
+    <div class="stabil-scene">
+      <span class="stabil-stop">
+        <span class="stop-tegn">STOP</span>
+      </span>
+      <span class="stabil-truck">🚛</span>
+    </div>
+    <div class="stabil-tekst">Ikke flere pladser at flytte</div>`;
+  slide.appendChild(overlay);
+  setTimeout(() => {
+    overlay.classList.add('fade-ud');
+    setTimeout(() => overlay.remove(), 700);
+  }, 3200);
+}
+
+function animerPladsflyt() {
+  const slide = document.querySelector('.slide.active');
+  if (!slide) return;
+  const minusBadges = [...slide.querySelectorAll('.minus-badge')];
+  const plusBadges  = [...slide.querySelectorAll('.plus-badge')];
+  if (!minusBadges.length) return;
+
+  // Pulse the affected group rows
+  slide.querySelectorAll('.group-row:has(.plus-badge), .group-row:has(.minus-badge)').forEach(row => {
+    row.style.animation = 'groupPulse 1.2s ease 0.3s';
+    setTimeout(() => row.style.animation = '', 1600);
+  });
+
+  // Fly chairs from each minus-group to its plus-group
+  minusBadges.forEach((mb, i) => {
+    const pb = plusBadges[i];
+    if (!pb) return;
+    const fromR = mb.closest('.group-row-slots')?.getBoundingClientRect()
+                || mb.getBoundingClientRect();
+    const toR   = pb.closest('.group-row-slots')?.getBoundingClientRect()
+                || pb.getBoundingClientRect();
+
+    // Number of chairs to fly = count in badge text
+    const n = parseInt(mb.textContent.match(/\d+/)?.[0] || '1');
+    for (let j = 0; j < Math.min(n, 3); j++) {
+      const delay = 300 + j * 120;
+      setTimeout(() => {
+        const el = document.createElement('div');
+        el.className = 'pf-flyer';
+        el.textContent = '🪑';
+        el.style.left = (fromR.left + fromR.width/2 + j*10 - 12) + 'px';
+        el.style.top  = (fromR.top  + fromR.height/2 - 12) + 'px';
+        document.body.appendChild(el);
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          el.style.left    = (toR.left + toR.width/2 + j*10 - 12) + 'px';
+          el.style.top     = (toR.top  + toR.height/2 - 12) + 'px';
+        }));
+        setTimeout(() => { el.style.opacity='0'; setTimeout(()=>el.remove(),250); }, 750);
+      }, delay);
+    }
+  });
+}
+
+function animerFlyverVæk(slide) {
+  const dom = document.querySelector('.slide.active');
+  if (!dom) return;
+  const stadigAktiv = () => dom.classList.contains('active');
+
+  // Skjul alle "+N ledig"-badges fra start. Hver badge dukker først op når
+  // den tilhørende ansøger faktisk flyver væk (afsløres i Fase 2).
+  [...dom.querySelectorAll('.plus-badge')].forEach(b => {
+    b.style.animation = 'none';
+    b.style.opacity = '0';
+  });
+
+  (slide.flyverVæk || []).forEach((dep, i) => {
+    // Find flyveren i DEN gruppe vedkommende faktisk sidder i (ikke kun grp 10).
+    const orig = dom.querySelector(`.avatar.ans-${dep.id}`);
+    if (!orig) return;
+    const row = orig.closest('.group-row-slots');
+    if (!row) return;
+    const flyerBadge = orig.closest('.group-row')?.querySelector('.plus-badge');
+    const base = i * 4200;
+
+    // Fase 1 — gør opmærksom: highlight + badge
+    setTimeout(() => {
+      if (!stadigAktiv() || !orig.isConnected) return;
+      orig.classList.add('flyver-alert');
+      const badge = document.createElement('div');
+      badge.className = 'flyver-badge';
+      badge.textContent = 'Optaget på højere prioritet';
+      orig.appendChild(badge);
+    }, base + 200);
+
+    // Fase 2 — flyv væk (originalen holder pladsen fri imens)
+    setTimeout(() => {
+      if (!stadigAktiv() || !orig.isConnected) return;
+      const r = orig.getBoundingClientRect();
+      const g = +(orig.closest('.group-row')?.dataset.grp);
+      const fly = document.createElement('div');
+      fly.className = `avatar meeple-avatar ans-${dep.id} fly-away-avatar`;
+      fly.innerHTML = `${meepleSVG(dep.id, g, 'optaget')}<div class="fly-away-label">→ ${dep.til}</div>`;
+      fly.style.left = r.left + 'px';  fly.style.top = r.top + 'px';
+      fly.style.width = r.width + 'px'; fly.style.height = r.height + 'px';
+      fly.style.fontSize = (r.height * 0.34) + 'px';
+      document.body.appendChild(fly);
+      requestAnimationFrame(() => requestAnimationFrame(() => fly.classList.add('go')));
+      setTimeout(() => fly.remove(), 2100);
+      orig.classList.remove('flyver-alert');
+      // Vis netop denne flyvers "+1 ledig"-badge nu hvor vedkommende letter.
+      if (flyerBadge) {
+        flyerBadge.style.animation = 'badgeBounceIn 0.45s ease both';
+        flyerBadge.style.opacity = '';
+      }
+      orig.style.visibility = 'hidden';   // pladsen holdes fri
+    }, base + 1700);
+
+    // Fase 3 — den frigjorte plads glider ud til den yderste højre kapacitetsplads,
+    // mens de øvrige rykker én plads til venstre (FLIP).
+    setTimeout(() => {
+      if (!stadigAktiv() || !orig.isConnected) return;
+      const rAF2 = fn => requestAnimationFrame(() => requestAnimationFrame(fn));
+      const cells = [...row.querySelectorAll(':scope > .kap-celle')];
+      const flyerCell = orig.closest('.kap-celle');
+      const idx = cells.indexOf(flyerCell);
+      const BOUNCE = 'cubic-bezier(0.34,1.56,0.64,1)';   // let overshoot = bounce
+      const lavStol = () => { const c = document.createElement('div'); c.className='tom-plads ny-plads'; c.title='Ledig plads'; c.textContent='🪑'; return c; };
+
+      if (idx === -1) {                 // fald tilbage: flyver ikke i en kapacitetscelle
+        orig.remove();
+        const chair = lavStol(); chair.style.opacity='0'; row.appendChild(chair);
+        rAF2(() => { chair.style.transition='opacity 0.45s ease'; chair.style.opacity='1'; });
+        return;
+      }
+
+      const flyerLeft = flyerCell.getBoundingClientRect().left;
+      orig.remove();
+      // Avatarer til højre for flyveren rykker én celle til venstre
+      const movers = [];
+      for (let j = idx + 1; j < cells.length; j++) {
+        const el = cells[j].firstElementChild;
+        if (el) movers.push({ el, beforeLeft: el.getBoundingClientRect().left, fra: j });
+      }
+      movers.forEach(m => cells[m.fra - 1].appendChild(m.el));
+      // Den frigjorte stol lægges yderst til højre
+      const chair = lavStol();
+      cells[cells.length - 1].appendChild(chair);
+
+      // FLIP: avatarer glider blødt til venstre
+      movers.forEach(m => {
+        const dx = m.beforeLeft - m.el.getBoundingClientRect().left;
+        if (dx) {
+          m.el.style.transition = 'none';
+          m.el.style.transform = `translateX(${dx}px)`;
+          rAF2(() => { m.el.style.transition = 'transform 0.7s cubic-bezier(0.4,0,0.2,1)'; m.el.style.transform = ''; });
+        }
+      });
+      // Stolen glider fra flyverens plads ud til højre og lander med et lille bounce
+      const cdx = flyerLeft - chair.getBoundingClientRect().left;
+      chair.style.transition = 'none';
+      chair.style.transform = `translateX(${cdx}px)`;
+      chair.style.opacity = '0.85';
+      rAF2(() => {
+        chair.style.transition = `transform 0.8s ${BOUNCE}, opacity 0.35s ease`;
+        chair.style.transform = '';
+        chair.style.opacity = '1';
+      });
+    }, base + 3900);
+  });
+}
+
+// Lodret "rykker op": en avatar stiger fra standby-rækken op i en frigjort
+// ordinær plads. Genbruger flyver-mønsteret (frisk klon i body, eksplicit
+// størrelse fra rect), men bevæger sig op i stedet for væk. Slide-data:
+//   rykOp:[{id:'M', fra:60, til:10}]
+// Ny adfærd: destinationen i den bedre gruppe fyldes normalt (pulser via
+// animerClearing, "som fra køen"). Ansøgeren i standby-gruppen opløses langsomt
+// dér hvor vedkommende sad — i stedet for at flyve op (som lignede at selve
+// standby-pladsen blev flyttet).
+function animerRykOp(slide) {
+  const dom = document.querySelector('.slide.active');
+  if (!dom) return;
+  const stadigAktiv = () => dom.classList.contains('active');
+  // Forrige slide (midlertidig) viser migranten dér hvor vedkommende sad i standby.
+  // Slides ligger oven i hinanden (samme position), så positionen passer på skærmen.
+  const prevSlide = dom.previousElementSibling;
+
+  (slide.rykOp || []).forEach((mv, i) => {
+    // Destinationen (den bedre gruppe) fyldes HELT normalt — den pulser via
+    // animerClearing og skjules IKKE.
+    //
+    // Det vi sekvenserer er standby-gruppen: den ansøger der forlader (mv.id)
+    // skal være helt opløst, FØR den ansøger der overtager dens plads dukker op.
+    // "Overtageren" er avataren der nu står på leaverens gamle pladsindeks.
+    let taker = null;
+    let srcRect = null;
+    if (prevSlide) {
+      const prevAvs = [...prevSlide.querySelectorAll(`.group-row[data-grp="${mv.fra}"] .group-row-slots .avatar`)];
+      const eIdx = prevAvs.findIndex(a => a.classList.contains(`ans-${mv.id}`));
+      if (eIdx >= 0) srcRect = prevAvs[eIdx].getBoundingClientRect();
+      if (eIdx >= 0) {
+        const curAvs = [...dom.querySelectorAll(`.group-row[data-grp="${mv.fra}"] .group-row-slots .avatar`)];
+        taker = curAvs[eIdx] || null;            // den der nu sidder på leaverens plads
+        // Skjul overtageren indtil leaveren er opløst (før animerClearing pulser).
+        if (taker) taker.style.visibility = 'hidden';
+      }
+    }
+
+    const base = 300 + i * 1100;
+    setTimeout(() => {
+      if (!stadigAktiv()) { if (taker) taker.style.visibility = ''; return; }
+
+      const fraRow = dom.querySelector(`.group-row[data-grp="${mv.fra}"] .group-row-slots`);
+      if (!srcRect) {                      // fald tilbage: et sæde i standby-gruppen
+        const slot = fraRow?.querySelector('.tom-plads')
+                  || fraRow?.querySelector('.kap-celle')
+                  || fraRow;
+        if (slot) srcRect = slot.getBoundingClientRect();
+      }
+      if (!srcRect || !srcRect.width) { if (taker) taker.style.visibility = ''; return; }
+
+      // Ghost-meeple af leaveren der opløses dér hvor vedkommende sad.
+      const ghost = document.createElement('div');
+      ghost.className = `avatar meeple-avatar ans-${mv.id} ryk-op-ghost`;
+      ghost.innerHTML = meepleSVG(mv.id, mv.fra, 'optaget');
+      ghost.style.cssText =
+        `position:fixed;left:${srcRect.left}px;top:${srcRect.top}px;`
+        + `width:${srcRect.width}px;height:${srcRect.height}px;`
+        + `font-size:${srcRect.height*0.34}px;z-index:60;pointer-events:none;`;
+      document.body.appendChild(ghost);
+
+      // Kort glow i standby-rækken, hvor pladsen frigøres.
+      if (fraRow) {
+        fraRow.style.animation = 'rykOpGlow 0.9s ease';
+        setTimeout(() => { if (fraRow.isConnected) fraRow.style.animation = ''; }, 920);
+      }
+
+      // Opløs langsomt: fade + krymp + sløring.
+      const OPLOES = 1400;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        ghost.style.transition = `opacity ${OPLOES}ms ease, transform ${OPLOES}ms ease, filter ${OPLOES}ms ease`;
+        ghost.style.opacity = '0';
+        ghost.style.transform = 'scale(0.55)';
+        ghost.style.filter = 'blur(3px)';
+      }));
+      setTimeout(() => ghost.remove(), OPLOES + 150);
+
+      // FØRST når leaveren er helt opløst, dukker overtageren op på pladsen.
+      setTimeout(() => {
+        if (taker && taker.isConnected && stadigAktiv()) {
+          taker.style.visibility = '';
+          taker.style.animation = 'placerPuls 0.7s ease';
+          setTimeout(() => { if (taker.isConnected) taker.style.animation = ''; }, 760);
+        }
+      }, OPLOES + 60);
+    }, base);
+  });
+}
+
+function lukOverblik() {
+  document.querySelector('.slide.active .overblik-overlay')?.classList.remove('aktiv');
+}
+function aabnOverblik() {
+  document.querySelector('.slide.active .overblik-overlay')?.classList.add('aktiv');
+}
+
+function renderAll() {
+  const vp = document.getElementById('slideViewport');
+  vp.innerHTML = '';
+  SLIDES.forEach((s,i)=>{
+    const div = document.createElement('div');
+    div.className = 'slide'+(i===0?' active':'');
+    div.innerHTML = buildSlide(s);
+    vp.appendChild(div);
+  });
+  updatePPTNav();
+}
+
+// Aktiverer slide n + kører de slide-type-specifikke entry-animationer
+// (fyrværkeri på resultat, pladsflyt-fly eller stabil-lastbil på pladsflyt).
+function commitSlide(n) {
+  const slides = document.querySelectorAll('.slide');
+  slides[current].classList.remove('active');
+  current = n;
+  slides[current].classList.add('active');
+  setTimeout(scalePPT, 50);
+  updatePPTNav();
+  if (SLIDES[current]?.visStatus) setTimeout(fyrvkeri, 400);
+  const curSlide = SLIDES[current];
+  if (curSlide?.slideType === 'pladsflyt') {
+    if (curSlide.flyverVæk?.length) {
+      // Gen-render siden til før-tilstanden, så flyver-animationen kan
+      // afspilles forfra hver gang man kommer til siden.
+      slides[current].innerHTML = buildSlide(curSlide);
+      setTimeout(() => animerFlyverVæk(curSlide), 150);
+    } else {
+      const hasTransfers = curSlide.udbud?.some(u => u.badges &&
+        Object.values(u.badges).some(b => String(b).startsWith('-')));
+      if (hasTransfers) setTimeout(animerPladsflyt, 150);
+      else              setTimeout(animerStabil, 400);
+    }
+  }
+  if (curSlide?.slideType === 'clearing') {
+    // Ingen rykop-animation længere: alle optagne (inkl. dem der rykker op og
+    // overtagere) står på deres pladser med det samme. "Nyoptaget"-mærkerne
+    // viser hvem der lige er kommet ind.
+    if (curSlide.nyoptaget?.length) setTimeout(() => animerNyoptaget(curSlide), 200);
+  }
+}
+
+let navLock = false;
+function goTo(n) {
+  if (n === current || navLock) return;
+  const cur = SLIDES[current];
+  if (n === current + 1 && cur?.slideType === 'midlertidig') {
+    navLock = true;
+    animerMidlertidigUd(() => { commitSlide(n); navLock = false; });
+  } else {
+    commitSlide(n);
+  }
+}
+
+function navigate(dir) { const n=current+dir; if(n>=0&&n<SLIDES.length) goTo(n); }
+
+function visStatModal(id) {
+  document.getElementById(id).classList.add('aktiv');
+}
+function lukStatModal(id) {
+  document.getElementById(id).classList.remove('aktiv');
+}
+function skiftTab(btn, panel) {
+  const kort = btn.closest('.kartotek-kort');
+  kort.querySelectorAll('.ktab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  kort.querySelectorAll('.kpanel').forEach(p=>p.classList.add('skjult'));
+  kort.querySelector('.kpanel-'+panel).classList.remove('skjult');
+}
+document.addEventListener('keydown', e=>{
+  if(['ArrowRight','ArrowDown',' '].includes(e.key)){e.preventDefault();navigate(1);}
+  if(['ArrowLeft','ArrowUp'].includes(e.key))    navigate(-1);
+});
+
+// ── STATISK FLOW ──────────────────────────────────────────────
+// 11 ansøgere · K1 (grp.10), K2 (grp.20), K1-standby (grp.60), K2-standby (grp.70)
+// Logisk korrekt: kun ansøgere på prio 2 i Jura "flyver" til prio 1 andetsteds.
+function generateStaticSlides() {
+  const u = UDBUD[FOKUS_IDX], uid = u.id;
+  const GRPS = [10, 20, 60, 70];
+  const S = (n,t) => ({id:n, status:t}), T = n => ({tom:n});
+  const OPT = n => S(n,'optaget'), UÆ = n => S(n,'uændret'), MID = n => S(n,'midlertidig');
+  const END = n => ({id:n, status:'optaget', endelig:true});
+
+  // ── Motor-input afledt af ANSØGERE ──────────────────────────────
+  const juraGrps = a => { const an = a.ansøgninger.find(x=>x.udbud===uid); return an ? [...an.grupper].sort((x,y)=>x-y) : []; };
+  const flyTil   = a => { const b = a.ansøgninger.filter(x=>x.udbud!==uid).sort((p,q)=>p.prio-q.prio)[0]; return b ? (udbudInfo(b.udbud)?.navn || null) : null; };
+  const KAND  = ANSØGERE.map(a=>({id:a.id, j:juraGrps(a), til:flyTil(a)})).filter(a=>a.j.length);
+  const kById = Object.fromEntries(KAND.map(a=>[a.id,a]));
+  const rng = (id,g) => ansInfo(id)?.[rankField(g)] ?? 0;   // rang i gruppen (snit/kval)
+  const lr  = id => ansInfo(id)?._rang ?? 0;                // lodtrækning (kun ved lige)
+
+  // ── Deferred acceptance over Jura's grupper (migration mod laveste nr.) ──
+  function fordel(caps, gone) {
+    const prefs = {}, ptr = {}, holders = {10:[],20:[],60:[],70:[]};
+    for (const a of KAND) { if (gone.has(a.id)) continue; prefs[a.id] = a.j; ptr[a.id] = 0; }
+    let unplaced = Object.keys(prefs);
+    while (unplaced.length) {
+      for (const id of unplaced) { const p = prefs[id]; if (ptr[id] < p.length) holders[p[ptr[id]]].push(id); }
+      let bumped = false;
+      for (const g of GRPS) {
+        holders[g].sort((x,y)=> rng(y,g)-rng(x,g) || lr(x)-lr(y));
+        if (holders[g].length > caps[g]) { const ex = holders[g].splice(caps[g]); for (const id of ex) { ptr[id]++; bumped = true; } }
+      }
+      const inHold = new Set(Object.values(holders).flat());
+      unplaced = Object.keys(prefs).filter(id => ptr[id] < prefs[id].length && !inHold.has(id));
+      if (!bumped) break;
+    }
+    const place = {}; for (const g of GRPS) for (const id of holders[g]) place[id] = g;
+    const queues = {10:[],20:[],60:[],70:[]};
+    for (const a of KAND) { if (gone.has(a.id)) continue; const cur = place[a.id];
+      for (const g of a.j) { const better = cur!==undefined && cur<=g; if (!better && holders[g].length >= caps[g]) queues[g].push(a.id); } }
+    for (const g of GRPS) queues[g].sort((x,y)=> rng(y,g)-rng(x,g) || lr(x)-lr(y));
+    return { place, queues, holders };
+  }
+  // Pladsflyt: kun i pool, kun når én gruppe har ledige pladser OG makkeren har kø → alle ledige flyttes.
+  function findRealloc(caps, st) {
+    for (const [a,b] of [[10,20],[60,70]]) {
+      const fa = caps[a]-st.holders[a].length, fb = caps[b]-st.holders[b].length;
+      if (fa>0 && st.queues[b].length>0 && fb<=0) return {from:a, to:b, n:fa};
+      if (fb>0 && st.queues[a].length>0 && fa<=0) return {from:b, to:a, n:fb};
+    }
+    return null;
+  }
+
+  // ── Scenarie-knapper (justeres her) ─────────────────────────────
+  const CAP0 = {10:5, 20:5, 60:2, 70:2};
+  const FLY_ORDER = ['B', ['E','L'], ['I','X'], 'P', 'W', 'Z'];   // rækkefølge for afgange til andre udbud
+
+  // ── Kør runderne ────────────────────────────────────────────────
+  const caps = {...CAP0}, gone = new Set(), rounds = [];
+  let prev = null, st = fordel(caps, gone), r = 1, fi = 0;
+  rounds.push({ n:1, caps:{...caps}, st, prev:null });
+  while (true) {
+    let ev = null; const rc = findRealloc(caps, st);
+    if (rc) ev = {type:'realloc', ...rc};
+    else if (fi < FLY_ORDER.length) {
+      let grp = FLY_ORDER[fi]; grp = Array.isArray(grp) ? grp : [grp];
+      grp = grp.filter(id => !gone.has(id) && st.place[id] !== undefined); fi++;
+      if (grp.length) ev = {type:'fly', ids:grp}; else continue;
+    }
+    rounds[rounds.length-1].evUd = ev;
+    if (!ev) break;
+    if (ev.type==='fly') ev.ids.forEach(id=>gone.add(id)); else { caps[ev.from]-=ev.n; caps[ev.to]+=ev.n; }
+    prev = st; st = fordel(caps, gone); r++; rounds.push({ n:r, caps:{...caps}, st, prev });
+    if (r > 20) break;
+  }
+  const finalState = st, finalCaps = {...caps};
+  // Lodtrækning: find ansøgere der er lige ved en K1-grænsekvotient (grp 10/60),
+  // hvor der er flere med den karakter end der blev optaget på den (= lodtrækning).
+  LOTTERY_IDS = new Set();
+  [10,60].forEach(g => {
+    const holders = finalState.holders[g] || [];
+    if (!holders.length) return;
+    const gk = Math.min(...holders.map(id => ansInfo(id).gns));
+    const alleVedGk = ANSØGERE.filter(a => a.gns === gk &&
+      a.ansøgninger.some(an => an.udbud === uid && an.grupper.includes(g)));
+    const optVedGk = holders.filter(id => ansInfo(id).gns === gk);
+    if (alleVedGk.length > optVedGk.length) alleVedGk.forEach(a => LOTTERY_IDS.add(a.id));
+  });
+  let cum = []; rounds.forEach(rd => { rd.goneBefore = [...cum]; if (rd.evUd?.type==='fly') cum = [...cum, ...rd.evUd.ids]; });
+  const fløjetAlle = [...gone];
+
+  // ── Adapter-hjælpere ────────────────────────────────────────────
+  function midEntries(stt, prv, cps, g, goneSet) {
+    // UÆ: dem der sad i g ved sidste rundes slut — bliver vist her indtil clearing
+    //     (også dem der er på vej op; de forlader g først på clearing-siden).
+    const uæIds = prv ? KAND.filter(a => !goneSet.has(a.id) && prv.place[a.id]===g).map(a=>a.id) : [];
+    const uæSet = new Set(uæIds);
+    // MID: udfordrere der søger g og kommer fra en dårligere/ingen gruppe (rykker op i g) — vindere + kø
+    const midIds = KAND.filter(a => !goneSet.has(a.id) && a.j.includes(g) && !uæSet.has(a.id) &&
+        (prv ? (prv.place[a.id]===undefined || prv.place[a.id] > g) : true)).map(a=>a.id);
+    const ents = [...uæIds.map(id=>UÆ(id)), ...midIds.map(id=>MID(id))];
+    const free = cps[g] - (uæIds.length + midIds.length);
+    if (free > 0) ents.push(T(free));
+    return ents;
+  }
+  function optEntries(stt, cps, g) {
+    const ents = stt.holders[g].map(id => OPT(id));
+    const free = cps[g]-stt.holders[g].length; if (free>0) ents.push(T(free));
+    return ents;
+  }
+  const slotsFra = fn => ({10:fn(10), 20:fn(20), 60:fn(60), 70:fn(70)});
+
+  const slides = [];
+  // Opstart
+  slides.push({ titel:`Opstart — ${u.navn}`, slideType:'tom',
+    note:'Alle pladser er ledige. Ansøgerne fordeles via Kvote 1 (snit), Kvote 2 (kvalifikation) og to standby-grupper.',
+    legende:['tom'], visOverblik:true,
+    udbud:[{ udbudId:uid, kap:{...CAP0}, slots:slotsFra(g => CAP0[g]>0 ? [T(CAP0[g])] : []) }] });
+
+  rounds.forEach((rd,i) => {
+    const goneSet = new Set(rd.goneBefore);
+    const next = rounds[i+1];
+    // Midlertidig
+    slides.push({ titel:`Runde ${rd.n} · Midlertidig placering — ${u.navn}`, slideType:'midlertidig',
+      note: midNote(rd,i), legende:['uændret','midlertidig'], runde:rd.n, fløjet:rd.goneBefore,
+      udbud:[{ udbudId:uid, kap:{...rd.caps}, slots:slotsFra(g => midEntries(rd.st, rd.prev, rd.caps, g, goneSet)) }] });
+    // Clearing (+ migrationer = rykOp)
+    const mig = [];
+    if (rd.prev) for (const id in rd.st.place) { const pg = rd.prev.place[id]; if (pg!==undefined && rd.st.place[id] < pg) mig.push({id, fra:pg, til:rd.st.place[id]}); }
+    // Nyoptagne: enten fra køen (ingen plads før → "Nyoptaget") eller rykket op
+    // fra en dårligere gruppe (havde plads før → "Rykket op").
+    const nyopt = [];
+    if (rd.prev) for (const id in rd.st.place) {
+      const pg = rd.prev.place[id];
+      if (pg === undefined)            nyopt.push({ id, op:false });
+      else if (rd.st.place[id] < pg)   nyopt.push({ id, op:true  });
+    }
+    const køMap = {}; for (const g of GRPS) køMap[g] = rd.st.queues[g].length;
+    slides.push({ titel:`Runde ${rd.n} · Clearing — ${u.navn}`, slideType:'clearing',
+      note: clrNote(rd, mig), legende:['optaget','tom'], fløjet:rd.goneBefore,
+      ...(mig.length?{rykOp:mig}:{}), ...(nyopt.length?{nyoptaget:nyopt}:{}),
+      udbud:[{ udbudId:uid, kap:{...rd.caps}, køMap, slots:slotsFra(g => optEntries(rd.st, rd.caps, g)) }] });
+    // Pladsflyt
+    const pfUd = { udbudId:uid }; let pfNote = ''; const extra = { fløjet:rd.goneBefore };
+    if (rd.evUd?.type==='realloc') {
+      const e = rd.evUd; pfUd.kap = {...next.caps};
+      pfUd.badges = { [e.from]:`-${e.n} plads`, [e.to]:`+${e.n} plads` };
+      pfUd.slots = slotsFra(g => optEntries(rd.st, next.caps, g));
+      pfNote = `${grpNavn(e.from)} har ${e.n} ledig${e.n>1?'e':''} plads${e.n>1?'er':''} og ingen i kø — ${e.n>1?'de':'den'} flyttes til ${grpNavn(e.to)}, hvor der er kø. En ny ledig plads opstår, som køen kæmper om i næste runde.`;
+    } else if (rd.evUd?.type==='fly') {
+      const e = rd.evUd; pfUd.kap = {...rd.caps};
+      const byGrp = {}; e.ids.forEach(id => { const g = rd.st.place[id]; byGrp[g] = (byGrp[g]||0)+1; });
+      pfUd.badges = {}; for (const g in byGrp) pfUd.badges[g] = `+${byGrp[g]} ledig`;
+      pfUd.slots = slotsFra(g => optEntries(rd.st, rd.caps, g));
+      extra.flyverVæk = e.ids.map(id => ({id, til:kById[id].til}));
+      pfNote = flyNote(e);
+    } else {
+      pfUd.kap = {...rd.caps}; pfUd.slots = slotsFra(g => optEntries(rd.st, rd.caps, g));
+      pfNote = 'Ingen ledige pladser at flytte og ingen i kø der kan rykke op — fordelingen er stabil og stopper.';
+    }
+    slides.push({ titel:`Runde ${rd.n} · Pladsflyt — ${u.navn}`, slideType:'pladsflyt',
+      note: pfNote, legende:['optaget','tom'], ...extra, udbud:[pfUd] });
+  });
+
+  // Resultat
+  const placedFinal = new Set(Object.keys(finalState.place));
+  const afviste = KAND.filter(a => !gone.has(a.id) && !placedFinal.has(a.id)).map(a=>a.id);
+  const koePerGrp = {}; for (const g of GRPS) koePerGrp[g] = finalState.queues[g].length;
+  slides.push({ titel:`Endelig fordeling — ${u.navn}`, slideType:'result', visStatus:true,
+    note: resNote(fløjetAlle, afviste), legende:['optaget'], afviste, fløjet:fløjetAlle,
+    udbud:[{ udbudId:uid, kap:{...finalCaps}, gkv:{}, koePerGrp,
+      slots:slotsFra(g => { const e = finalState.holders[g].map(id=>END(id)); const free = finalCaps[g]-finalState.holders[g].length; if (free>0) e.push(T(free)); return e; }) }] });
+
+  const tot = slides.length; slides.forEach((s,i)=> s.slideNum = `${i+1}/${tot}`);
+  return slides;
+
+  // ── Note-tekster (hoistes) ──────────────────────────────────────
+  function grpNavn(g){ return ({10:'Kvote 1', 20:'Kvote 2', 60:'K1-standby', 70:'K2-standby'})[g]; }
+  function navn(id){ return ansInfo(id)?.navn || id; }
+  function midNote(rd,i){
+    if (rd.n===1) return `Alle ${KAND.length} ansøgere søger simultant. Hver gruppe placerer midlertidigt de højest rangerede op til sin kapacitet; resten står i kø.`;
+    const pe = rounds[i-1]?.evUd;
+    if (pe?.type==='realloc') return `Den flyttede kapacitet i ${grpNavn(pe.to)} fyldes nu fra køen. Ansøgere rykker om muligt op mod laveste gruppenummer.`;
+    if (pe?.type==='fly')     return `De ledige pladser efter ${pe.ids.map(navn).join(' og ')} fyldes fra køen. Ansøgere rykker om muligt op mod laveste gruppenummer.`;
+    return 'Køen kæmper om de ledige pladser.';
+  }
+  function clrNote(rd,mig){
+    let s = 'De midlertidige placeringer bekræftes.';
+    if (mig.length) s += ' ' + mig.map(m=>`${navn(m.id)} rykker op fra ${grpNavn(m.fra)} til ${grpNavn(m.til)}`).join('; ') + '.';
+    return s;
+  }
+  function flyNote(e){
+    const parts = e.ids.map(id=>`${navn(id)} optages på sin højere prioritet (${kById[id].til}) og forlader ${u.navn}`);
+    return parts.join('; ') + `. ${e.ids.length>1?'Pladserne bliver ledige':'Pladsen bliver ledig'} — en ny runde starter.`;
+  }
+  function resNote(fløj, afv){
+    let s = `Fordelingen er stabil. ${fløj.length} ansøgere blev optaget på en højere prioritet på et andet udbud (${fløj.map(navn).join(', ')}).`;
+    if (afv.length) s += ` ${afv.map(navn).join(', ')} fik ingen ${u.navn}-plads.`;
+    return s;
+  }
+}
+
+// ── START ─────────────────────────────────────────────────────
+ANSØGERE.forEach(a => a._rang = Math.random());
+SLIDES = generateStaticSlides();
+renderAll();
+scalePPT();
+</script>
+</body>
+</html>
