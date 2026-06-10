@@ -76,7 +76,7 @@ body {
 }
 
 /* ── ANIMATIONER ──────────────────────────────────────── */
-.avatar.vil-rykke { filter:grayscale(1) brightness(0.55) !important; }
+.avatar.vil-rykke { position: relative; }
 @keyframes avatarFadeIn {
   from { opacity:0; transform:scale(0.7); }
   to   { opacity:1; transform:scale(1); }
@@ -260,17 +260,17 @@ body {
 }
 .avatar-lock {
   position: absolute;
-  top: -9px;
-  right: -9px;
-  width: 20px;
-  height: 20px;
+  top: -5px;
+  right: -4px;
+  width: 17px;
+  height: 17px;
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 1px 4px rgba(0,0,0,0.35);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   line-height: 1;
   z-index: 2;
   pointer-events: auto;
@@ -308,13 +308,33 @@ body {
 /* Status-effekter */
 .avatar.optaget  { outline:2px solid var(--status-optaget);     outline-offset:2px; }
 .avatar.midlertidig .meeple { opacity: 0.7; }
-.avatar-vent { font-size: 0.72rem; }
+.avatar.meeple-avatar.i-koe .meeple { opacity: 0.6; }
+.avatar.meeple-avatar.i-koe .meeple-num { fill: #e5edf5; }
+/* Ansøger der rykker op til en bedre gruppe: beholder sin farve, men får et kryds
+   over sig i den gruppe vedkommende forlader. */
+.avatar.vil-rykke::after {
+  content: ''; position: absolute; inset: -2px; z-index: 6; pointer-events: none;
+  background:
+    linear-gradient(45deg, transparent calc(50% - 1.6px), #475569 calc(50% - 1.6px), #475569 calc(50% + 1.6px), transparent calc(50% + 1.6px)),
+    linear-gradient(-45deg, transparent calc(50% - 1.6px), #475569 calc(50% - 1.6px), #475569 calc(50% + 1.6px), transparent calc(50% + 1.6px));
+  animation: krydsInd 0.45s ease both;
+}
+@keyframes krydsInd { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
+.avatar-vent { font-size: 0.62rem; }
 .avatar-terning {
-  position: absolute; top: -9px; right: 2px;
-  width: 20px; height: 20px; border-radius: 50%;
+  position: absolute; top: -5px; right: 9px;
+  width: 17px; height: 17px; border-radius: 50%;
   background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.35);
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.8rem; line-height: 1; z-index: 3;
+  font-size: 0.68rem; line-height: 1; z-index: 3;
+  pointer-events: auto; cursor: help;
+}
+.avatar-lup {
+  position: absolute; top: -5px; right: -4px;
+  width: 17px; height: 17px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.62rem; line-height: 1; z-index: 3;
   pointer-events: auto; cursor: help;
 }
 .avatar.pladsflyt   { outline:2px dashed var(--status-pladsflyt);  outline-offset:2px; }
@@ -973,11 +993,11 @@ let LOTTERY_IDS = new Set();
 
 const UDBUD = [
   { id:"A", navn:"Sygeplejerske", ikon:"✚", billede:"🏥", sjovTekst:"Fordi du faktisk ønsker at hjælpe folk – og ser ud som en, der gør det.",
-    grupper:[{ nr:10, kap:5, label:"Kvote 1" },{ nr:20, kap:5, label:"Kvote 2" },{ nr:60, kap:2, label:"K1 standby" },{ nr:70, kap:2, label:"K2 standby" }] },
+    grupper:[{ nr:10, kap:5, label:"Kvote 1" },{ nr:20, kap:5, label:"Kvote 2" },{ nr:60, kap:2, label:"Kvote 1 standby" },{ nr:70, kap:2, label:"Kvote 2 standby" }] },
   { id:"B", navn:"Jura", ikon:"⚖️", billede:"⚖️", sjovTekst:"Fordi du vil vinde diskussioner ved middagsbordet – og nu få løn for det.",
-    grupper:[{ nr:10, kap:3, label:"Kvote 1" },{ nr:20, kap:4, label:"Kvote 2" },{ nr:60, kap:0, label:"K1 standby" },{ nr:70, kap:0, label:"K2 standby" }] },
+    grupper:[{ nr:10, kap:3, label:"Kvote 1" },{ nr:20, kap:4, label:"Kvote 2" },{ nr:60, kap:0, label:"Kvote 1 standby" },{ nr:70, kap:0, label:"Kvote 2 standby" }] },
   { id:"C", navn:"Finansøkonom",  ikon:"₿", billede:"💰", sjovTekst:"Fordi penge ikke bare er penge – de er fremtiden, med renter på.",
-    grupper:[{ nr:10, kap:4, label:"Kvote 1" },{ nr:20, kap:4, label:"Kvote 2" },{ nr:60, kap:0, label:"K1 standby" },{ nr:70, kap:0, label:"K2 standby" }] },
+    grupper:[{ nr:10, kap:4, label:"Kvote 1" },{ nr:20, kap:4, label:"Kvote 2" },{ nr:60, kap:0, label:"Kvote 1 standby" },{ nr:70, kap:0, label:"Kvote 2 standby" }] },
 ];
 
 const MOTIVATION = {
@@ -1127,9 +1147,17 @@ function meepleTal(id, grpNr) {
 // Selve meeple-figuren (farvet krop, hvid kant) med bogstav + ét tal.
 // Guldkant når pladsen er endelig (lukket lås).
 function meepleSVG(id, grpNr, status, opts={}) {
-  const fill = MEEPLE_FARVER[id] || '#64748b';
   const tal  = meepleTal(id, grpNr);
   const idFont = id.length > 1 ? 17 : 24;
+  if (opts.shadow) {
+    // Farveløs grå skygge for kø-ansøgere (får farve når de får en plads).
+    return `<svg class="meeple" viewBox="0 0 80 80" preserveAspectRatio="xMidYMid meet">`
+         + `<path d="${MEEPLE_PATH}" fill="#aab4c0" stroke="#ffffff" stroke-width="3"/>`
+         + `<text x="40" y="43" class="meeple-id" style="font-size:${idFont}px">${id}</text>`
+         + (tal ? `<text x="40" y="61" class="meeple-num">${tal}</text>` : '')
+         + `</svg>`;
+  }
+  const fill = MEEPLE_FARVER[id] || '#64748b';
   const kant = opts.gold ? '#FFC21A' : '#ffffff';
   const kantBredde = opts.gold ? 5 : 3.5;
   return `<svg class="meeple" viewBox="0 0 80 80" preserveAspectRatio="xMidYMid meet">`
@@ -1140,7 +1168,7 @@ function meepleSVG(id, grpNr, status, opts={}) {
 }
 
 function avatarHTML(entry, grpNr, uddId, opts={}) {
-  if (entry.tom) { const nyKls = entry.ny ? ' ny-plads' : ''; return `<div class="tom-plads${nyKls}" title="Ledig plads">🪑</div>`.repeat(entry.tom); }
+  if (entry.tom) { const nyKls = entry.ny ? ' ny-plads' : ''; return `<div class="tom-plads${nyKls}" title="Plads">🪑</div>`.repeat(entry.tom); }
   const info = ansInfo(entry.id);
   const vilRykke = (opts.vilRykkeIds?.has(entry.id) && entry.status==='uændret') ? 'vil-rykke' : '';
   const cls = `avatar meeple-avatar ans-${entry.id} ${entry.status||''} ${vilRykke}`;
@@ -1149,7 +1177,7 @@ function avatarHTML(entry, grpNr, uddId, opts={}) {
   let endelig = false;
   if (entry.status === 'midlertidig') {
     // Midlertidig placering: lille ⏳-mærke (som hængelåsen) + dæmpet (60%).
-    lock = `<span class="avatar-lock avatar-vent" title="Midlertidig placering i denne runde">&#9203;</span>`;
+    lock = `<span class="avatar-lock avatar-vent" title="Midlertidig placering">&#9203;</span>`;
   }
   if (info && uddId && (entry.status==='optaget' || entry.status==='uændret')) {
     let showEndelig;
@@ -1175,15 +1203,31 @@ function avatarHTML(entry, grpNr, uddId, opts={}) {
     // En standby-plads (grp 60/70) er ALDRIG en endelig placering:
     // ingen lukket lås, ingen guldkant — kun en sikker (åben) plads.
     if (grpNr === 60 || grpNr === 70) { showEndelig = false; endelig = false; }
+    // Slutside (Endelig fordeling): ALLE placerede får lukket hængelås (også standby).
+    // Guldkanten (endelig) røres IKKE — den viser fortsat dem optaget på højeste prioritet.
+    if (opts.slutLås) { showEndelig = true; }
     lock = `<span class="avatar-lock" title="${showEndelig ? 'Endelig plads' : 'Sikker plads'}">${showEndelig ? '&#128274;' : '&#128275;'}</span>`;
   }
-  const klasser = `${cls}${endelig ? ' endelig' : ''}`;
-  // 🎲 Lodtrækning: ansøgere der er lige ved en K1-grænsekvotient (grp 10/60).
+  const erKø = entry.status === 'kø';
+  const erGhost = entry.status === 'ghost';
+  const erSkygge = erKø || erGhost;
+  const klasser = `${cls}${endelig ? ' endelig' : ''}${erSkygge ? ' i-koe' : ''}`;
+  // 🎲 Lodtrækning: kun på de to slides der har visTerning (Ansøgere + Endelig fordeling).
+  // Vises på alle lodtræknings-ansøgere i K1-grupperne (grp 10/60), uanset om de er optaget eller i kø.
   let terning = '';
-  if ((grpNr === 10 || grpNr === 60) && LOTTERY_IDS.has(entry.id)) {
-    terning = `<span class="avatar-terning" title="Lodtrækning – samme karakter som grænsekvotienten">&#127922;</span>`;
+  if (opts.visTerning && (grpNr === 10 || grpNr === 60) && LOTTERY_IDS.has(entry.id)) {
+    terning = `<span class="avatar-terning" title="Lodtrækning">&#127922;</span>`;
   }
-  return `<div class="${klasser}" title="${tip}" style="position:relative;">${terning}${lock}${meepleSVG(entry.id, grpNr, entry.status, { gold: endelig })}</div>`;
+  // 🔍 Lup i køen: KUN for ansøgere uden en reel plads (uden hængelås 🔒/🔓 nogen
+  // steder på siden). Et ⏳ (midlertidig) tæller IKKE som en placering.
+  let lup = '';
+  if (erKø && !(opts.placeretSet?.has(entry.id))) {
+    lup = `<span class="avatar-lup" title="Ikke placeret">&#128269;</span>`;
+  }
+  const divTitle = erSkygge
+    ? (avatarTip(entry.id) + ' — i kø (venter på plads)')
+    : (entry.status === 'midlertidig' ? 'Midlertidig placering' : tip);
+  return `<div class="${klasser}" title="${divTitle}" style="position:relative;">${lup}${terning}${lock}${meepleSVG(entry.id, grpNr, entry.status, { gold: endelig, shadow: erSkygge })}</div>`;
 }
 // Sortér optagne/kø: rang-felt (gns/kval) faldende; LIGHED brydes på
 // lodtrækningsnummeret (_rang) stigende — samme rækkefølge i alle runder.
@@ -1211,10 +1255,14 @@ function clearingSlotHTML(entries, kv, grpNr, uddId) {
 // de er fyldt med ansøger, en ledig stol eller helt tomme) vises som grå celler.
 // Kø udover kapaciteten tegnes uden celle. Bruges på ALLE slidetyper.
 function renderSlots(entries, kv, grpNr, uddId, opts={}) {
-  const opt  = entries.filter(e=>!e.tom).sort(cmpRank(grpNr));
+  // Rigtige indehavere (farvede) fylder cellerne; ledige celler vises som stole.
+  // Kø-skygger kommer ALTID efter cellerne — en kø-skygge fylder aldrig en plads.
+  const real = entries.filter(e=>!e.tom && e.status!=='kø').sort(cmpRank(grpNr));
+  const koe  = entries.filter(e=>!e.tom && e.status==='kø').sort(cmpRank(grpNr));
   const toms = entries.filter(e=>e.tom);
-  const flat = [...opt];
+  const flat = [...real];
   for (const e of toms) for (let i=0;i<(e.tom||1);i++) flat.push({tom:1, ny: opts.nyPlads || e.ny});
+  flat.push(...koe);
   // Aldrig mere end MAX pladser på én række: vis 13 + "+N" hvis der er flere.
   const MAX = 14;
   let visible = flat, skjult = 0;
@@ -1244,17 +1292,27 @@ function midlertidigSlotHTML(entries, kv, grpNr, uddId, vilRykkeIds) {
   return out;
 }
 
-function legendeHTML(keys) {
+function legendeHTML(keys, visTerning) {
   const defs = {
     'midlertidig':{cls:'midlertidig',label:'Midlertidig i denne runde'},
     'pladsflyt':  {cls:'pladsflyt',  label:'Overført kapacitet'},
     'tom':        {cls:'tom-plads',  label:'Ledig kapacitet'},
   };
   if (!keys) return '';
+  if (keys.includes('ghost')) {
+    return `<div class="legend"><div class="legend-item">`
+      + `<span style="display:inline-block;width:13px;height:13px;border-radius:50%;background:#aab4c0;border:2px solid #fff;box-shadow:0 0 0 1px #cbd5e1;opacity:0.6;"></span> `
+      + `<span>Ansøger (venter på plads — får farve når den fordeles)</span></div>`
+      + (LOTTERY_IDS.size ? `<div class="legend-item">&#127922; <span>Lodtrækning ved grænsekvotient</span></div>` : '')
+      + `</div>`;
+  }
   const lockItems = `
     <div class="legend-item">🔒 <span>Endelig plads</span></div>
     <div class="legend-item">🔓 <span>Sikret plads</span></div>`
-    + (LOTTERY_IDS.size ? `\n    <div class="legend-item">&#127922; <span>Lodtrækning ved grænsekvotient</span></div>` : '');
+    + ((keys.includes('optaget')||keys.includes('midlertidig'))
+        ? `\n    <div class="legend-item"><span style="display:inline-block;width:13px;height:13px;border-radius:50%;background:#aab4c0;border:2px solid #fff;box-shadow:0 0 0 1px #cbd5e1;opacity:0.6;"></span> <span>I kø (venter på plads)</span></div>`
+          + `\n    <div class="legend-item">&#128269; <span>Ikke placeret nogen steder</span></div>` : '')
+    + ((visTerning && LOTTERY_IDS.size) ? `\n    <div class="legend-item">&#127922; <span>Lodtrækning ved grænsekvotient</span></div>` : '');
   return `<div class="legend">${keys.map(k=>{
     const d = defs[k]; if (!d) return '';
     if (k==='tom') return `<div class="legend-item"><span style="font-size:1rem;opacity:0.55;">🪑</span><span>${d.label}</span></div>`;
@@ -1293,6 +1351,7 @@ function buildSlide(s) {
   ];
 
   // Beregn én gang for hele slide (ikke per udbud-sektion)
+  const placeretSet = new Set();  // kun reelle pladser med hængelås (🔒/🔓) — får IKKE lup i køen (⏳ tæller IKKE)
   {
     const placedFromSlide = {};
     const kapFromSlide = {};
@@ -1301,8 +1360,10 @@ function buildSlide(s) {
       for (const [k,v] of Object.entries(ud2.kap||{})) kapFromSlide[ud2.udbudId][+k]=v;
       for (const grp2 of (udbudInfo(ud2.udbudId)?.grupper||[])) {
         for (const e of (ud2.slots?.[grp2.nr]||[])) {
-          if (!e.tom && (e.status==='optaget'||e.status==='uændret'))
+          if (!e.tom && (e.status==='optaget'||e.status==='uændret')) {
             placedFromSlide[e.id] = {udbudId:ud2.udbudId, gruppeNr:grp2.nr};
+            placeretSet.add(e.id);
+          }
         }
       }
     }
@@ -1339,7 +1400,7 @@ function buildSlide(s) {
       const badge   = ud.badges?.[grp.nr];
       const nyPlads = s.slideType === 'pladsflyt' && badge?.startsWith('+');
       const slotsHTML = renderSlots(entries, kv, grp.nr, ud.udbudId,
-        { vilRykkeIds: (s.slideType==='midlertidig' ? vilRykkeIds : undefined), nyPlads });
+        { vilRykkeIds: (s.slideType==='midlertidig' ? vilRykkeIds : undefined), nyPlads, visTerning: s.visTerning, placeretSet, slutLås: s.slutLås });
 
       const gkvVal  = s.visStatus && ud.gkv?.[grp.nr];
       const koeValResult = s.slideType === 'result' ? (ud.koePerGrp?.[grp.nr] ?? 0) : 1;
@@ -1373,6 +1434,11 @@ function buildSlide(s) {
         ? `<span style="font-size:0.62rem;color:#64748b;margin-left:8px;">GK: <strong>${gkvVis}</strong></span>` : '';
       const aktivEntries = entries.filter(e => !e.tom);
       const køCount = Math.max(0, aktivEntries.length - kv);
+      // Antal ansøgninger til denne gruppe i udbuddet (fast tal) + aktuelt antal i kø.
+      const ansIaltGrp = ANSØGERE.filter(a =>
+        (a.ansøgninger||[]).some(an => an.udbud === ud.udbudId && (an.grupper||[]).includes(grp.nr))
+      ).length;
+      const køAnt = aktivEntries.filter(e => e.status === 'kø').length;
       // Ekstra tekst varierer efter slidetype — Lukket går forud for alt
       const slotKey2 = `${ud.udbudId}|${grp.nr}`;
       const optCount2 = entries.filter(e=>!e.tom&&(e.status==='optaget'||e.status==='uændret')).length;
@@ -1385,12 +1451,14 @@ function buildSlide(s) {
       let ekstraHTML = '';
       if (!s.slideType || s.slideType === 'tom') {
         ekstraHTML = '';
+      } else if (s.slideType === 'ansøgere') {
+        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">Antal ansøgninger: ${ansIaltGrp}</span>`;
       } else if (!harLedigeP && alleLaaste && s.slideType === 'result') {
         const lukketKøVal = ud.koePerGrp?.[grp.nr] ?? 0;
         const lukketTxt = lukketKøVal > 0 ? 'ALLE OPTAGET (KØ)' : 'ALLE OPTAGET';
         ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;font-weight:600;color:#64748b;">${lukketTxt}</span>`;
       } else if (s.slideType === 'midlertidig') {
-        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">Ansøgninger ialt: ${aktivEntries.length}</span>`;
+        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">Ansøgninger ialt: ${ansIaltGrp} · Ansøgere i kø: ${køAnt}</span>`;
       } else if (s.slideType === 'result') {
         const koeVal = ud.koePerGrp?.[grp.nr] ?? 0;
         let koeTxt = '';
@@ -1404,20 +1472,14 @@ function buildSlide(s) {
       } else if (s.slideType === 'pladsflyt') {
         ekstraHTML = '';
       } else {
-        // clearing
-        if (harLedigeP) {
-          ekstraHTML = '';
-        } else {
-          const realKø = ud.køMap?.[grp.nr] ?? køCount;
-          const koeTxt = realKø > 0 ? `Ansøgere i kø: ${realKø}` : 'Ingen kø';
-          ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">${koeTxt}</span>`;
-        }
+        // clearing — samme visning som midlertidig
+        ekstraHTML = `<span style="margin-left:8px;font-size:0.62rem;color:#94a3b8;">Ansøgninger ialt: ${ansIaltGrp} · Ansøgere i kø: ${køAnt}</span>`;
       }
 
       return `
         <div class="group-row${nulKap ? ' nul-kapacitet' : ''}" data-grp="${grp.nr}">
           <div class="group-row-header" style="color:${col.hdr};">
-            <span>${idx===0?'🎓':'🛠️'}</span> ${grp.label}
+            ${grp.label}
             <span data-kap style="margin-left:8px;font-size:0.62rem;font-weight:600;color:#64748b;">Kapacitet: ${kv}</span>
             ${nulKap ? '<span class="nul-pladser-badge" title="Alle pladser er flyttet til den anden gruppe i poolen">&#8856; 0 pladser</span>' : ''}
             ${ekstraHTML}
@@ -1440,16 +1502,8 @@ function buildSlide(s) {
   }).join('');
 
   let rejectedHTML = '';
-  if (s.afviste?.length) {
-    const avatars = s.afviste.map(id=>{
-      return avatarHTML({id, status:'afvist'}, undefined, undefined);
-    }).join('');
-    rejectedHTML = `
-      <div class="rejected-box">
-        <div class="rejected-header">Ansøgere uden tilbud</div>
-        <div class="rejected-slots">${avatars}</div>
-      </div>`;
-  }
+  // Bundsektionen "Ansøgere uden tilbud" er fjernet — de uplacerede er allerede
+  // markeret med 🔍-lup ude i køerne. (s.afviste bruges stadig i statistikken.)
 
   // Beregn hvem der ikke har sikker plads på dette trin
   const placeredeIds = new Set();
@@ -1499,6 +1553,12 @@ function buildSlide(s) {
     for (const p of [...placedList, ...standbyList]) prioMap[p.prio] = (prioMap[p.prio]||0)+1;
     const prioRows = Object.keys(prioMap).sort((a,b)=>a-b)
       .map(p=>`<tr><td>Optaget på ${p}. prioritet</td><td>${prioMap[p]}</td></tr>`).join('');
+    // Grænsekvotient = laveste karaktergennemsnit blandt de optagne i Kvote 1 (grp 10) + 0,1
+    const k1Gns = [];
+    for (const ud of s.udbud) for (const e of (ud.slots?.[10]||[])) {
+      if (!e.tom && e.status === 'optaget') { const a = ansInfo(e.id); if (a) k1Gns.push(a.gns); }
+    }
+    const gkTxt = k1Gns.length ? (Math.min(...k1Gns) + 0.1).toFixed(1).replace('.',',') : '–';
     const afvistCount = s.afviste?.length ?? 0;
     const afvisteAvatars = (s.afviste||[])
       .map(id => `<div class="avatar ans-${id} afvist" title="${ansInfo(id)?.navn||id}" style="width:28px;height:28px;font-size:0.68rem;">${id}</div>`)
@@ -1517,15 +1577,11 @@ function buildSlide(s) {
               ${s.fløjet?.length ? `<tr><td>Optaget på andet udbud</td><td>${s.fløjet.length}</td></tr>` : ''}
               <tr><td>Afvist</td><td>${afvistCount}</td></tr>
               <tr><td>Ledige pladser</td><td>${tomTotal.count}</td></tr>
+              <tr><td>Grænsekvotient</td><td>${gkTxt}</td></tr>
               <tr class="stat-sep"><td colspan="2">Fordeling på prioriteter</td></tr>
               ${prioRows}
             </table>
           </div>
-          ${afvistCount > 0 ? `
-          <div class="stat-afviste">
-            <div class="stat-afviste-label">Afviste ansøgere</div>
-            <div class="stat-afviste-slots">${afvisteAvatars}</div>
-          </div>` : ''}
         </div>
       </div>`;
   }
@@ -1559,7 +1615,7 @@ function buildSlide(s) {
           </div>
         </div>` : ''}</div>
       ${rejectedHTML}
-      ${legendeHTML(s.legende)}
+      ${legendeHTML(s.legende, s.visTerning)}
       ${ikkeBar}
     </div>`;
 }
@@ -1722,7 +1778,7 @@ function animerNyoptaget(slide) {
   slide.nyoptaget.forEach((mv, i) => {
     setTimeout(() => {
       if (!stadigAktiv()) return;
-      const av = dom.querySelector(`.group-row-slots .avatar.ans-${mv.id}`);
+      const av = dom.querySelector(`.group-row-slots .avatar.ans-${mv.id}:not(.i-koe)`);
       if (!av) return;
       // Ét tydeligt blink
       av.style.animation = 'nyoptagetBlink 0.75s ease';
@@ -1821,12 +1877,15 @@ function animerFlyverVæk(slide) {
   });
 
   (slide.flyverVæk || []).forEach((dep, i) => {
-    // Find flyveren i DEN gruppe vedkommende faktisk sidder i (ikke kun grp 10).
-    const orig = dom.querySelector(`.avatar.ans-${dep.id}`);
+    // Find flyveren på dens FASTE plads (ikke en kø-skygge i en anden gruppe).
+    const orig = dom.querySelector(`.avatar.ans-${dep.id}:not(.i-koe)`)
+              || dom.querySelector(`.avatar.ans-${dep.id}`);
     if (!orig) return;
     const row = orig.closest('.group-row-slots');
     if (!row) return;
     const flyerBadge = orig.closest('.group-row')?.querySelector('.plus-badge');
+    // Flyverens kø-skygger i andre grupper toner ud, så vedkommende forsvinder helt.
+    const skygger = [...dom.querySelectorAll(`.avatar.ans-${dep.id}.i-koe`)];
     const base = i * 4200;
 
     // Fase 1 — gør opmærksom: highlight + badge
@@ -1846,7 +1905,7 @@ function animerFlyverVæk(slide) {
       const g = +(orig.closest('.group-row')?.dataset.grp);
       const fly = document.createElement('div');
       fly.className = `avatar meeple-avatar ans-${dep.id} fly-away-avatar`;
-      fly.innerHTML = `${meepleSVG(dep.id, g, 'optaget')}<div class="fly-away-label">→ ${dep.til}</div>`;
+      fly.innerHTML = `${meepleSVG(dep.id, g, 'optaget')}<div class="fly-away-label">${dep.til}</div>`;
       fly.style.left = r.left + 'px';  fly.style.top = r.top + 'px';
       fly.style.width = r.width + 'px'; fly.style.height = r.height + 'px';
       fly.style.fontSize = (r.height * 0.34) + 'px';
@@ -1860,6 +1919,23 @@ function animerFlyverVæk(slide) {
         flyerBadge.style.opacity = '';
       }
       orig.style.visibility = 'hidden';   // pladsen holdes fri
+      // Flyverens kø-skygger i andre grupper flyver også væk (ligesom hovedflyveren)
+      // og fjernes fra flowet, så køen lukker sig uden at efterlade et hul.
+      skygger.forEach(sk => {
+        if (!sk.isConnected) return;
+        const sr = sk.getBoundingClientRect();
+        const sg = +(sk.closest('.group-row')?.dataset.grp);
+        const skfly = document.createElement('div');
+        skfly.className = `avatar meeple-avatar ans-${dep.id} fly-away-avatar i-koe`;
+        skfly.innerHTML = meepleSVG(dep.id, sg, 'kø', { shadow: true });
+        skfly.style.left = sr.left + 'px';  skfly.style.top = sr.top + 'px';
+        skfly.style.width = sr.width + 'px'; skfly.style.height = sr.height + 'px';
+        skfly.style.fontSize = (sr.height * 0.34) + 'px';
+        document.body.appendChild(skfly);
+        requestAnimationFrame(() => requestAnimationFrame(() => skfly.classList.add('go')));
+        setTimeout(() => skfly.remove(), 2100);
+        sk.style.display = 'none';   // ude af flowet → køen rykker sammen
+      });
     }, base + 1700);
 
     // Fase 3 — den frigjorte plads glider ud til den yderste højre kapacitetsplads,
@@ -1871,7 +1947,7 @@ function animerFlyverVæk(slide) {
       const flyerCell = orig.closest('.kap-celle');
       const idx = cells.indexOf(flyerCell);
       const BOUNCE = 'cubic-bezier(0.34,1.56,0.64,1)';   // let overshoot = bounce
-      const lavStol = () => { const c = document.createElement('div'); c.className='tom-plads ny-plads'; c.title='Ledig plads'; c.textContent='🪑'; return c; };
+      const lavStol = () => { const c = document.createElement('div'); c.className='tom-plads ny-plads'; c.title='Plads'; c.textContent='🪑'; return c; };
 
       if (idx === -1) {                 // fald tilbage: flyver ikke i en kapacitetscelle
         orig.remove();
@@ -2095,6 +2171,26 @@ function generateStaticSlides() {
   const GRPS = [10, 20, 60, 70];
   const S = (n,t) => ({id:n, status:t}), T = n => ({tom:n});
   const OPT = n => S(n,'optaget'), UÆ = n => S(n,'uændret'), MID = n => S(n,'midlertidig');
+  const KØ = (n, up) => ({ id:n, status:'kø', uplaceret: !!up });
+  const GHOST = n => S(n,'ghost');
+
+  // "Tilbud på alle ønsker": for hver gruppe rangeres ALLE der har søgt den; de
+  // første kap får et midlertidigt tilbud, resten står i kø. En ansøger optræder
+  // derfor i alle de grupper, vedkommende har søgt (oprydningen sker i clearingen).
+  function buildProposal(gone) {
+    const placed = {}, queued = {}, allPlaced = new Set();
+    for (const g of GRPS) {
+      const f = rankField(g);
+      const ids = KAND.filter(a => a.j.includes(g) && !(gone && gone.has(a.id)))
+        .map(a => a.id)
+        .sort((x,y) => (ansInfo(y)?.[f] ?? 0) - (ansInfo(x)?.[f] ?? 0)
+                    || (ansInfo(x)?._rang ?? 0) - (ansInfo(y)?._rang ?? 0));
+      placed[g] = ids.slice(0, CAP0[g]);
+      queued[g] = ids.slice(CAP0[g]);
+      placed[g].forEach(id => allPlaced.add(id));
+    }
+    return { placed, queued, allPlaced };
+  }
   const END = n => ({id:n, status:'optaget', endelig:true});
 
   // ── Motor-input afledt af ANSØGERE ──────────────────────────────
@@ -2182,35 +2278,70 @@ function generateStaticSlides() {
     //     (også dem der er på vej op; de forlader g først på clearing-siden).
     const uæIds = prv ? KAND.filter(a => !goneSet.has(a.id) && prv.place[a.id]===g).map(a=>a.id) : [];
     const uæSet = new Set(uæIds);
-    // MID: udfordrere der søger g og kommer fra en dårligere/ingen gruppe (rykker op i g) — vindere + kø
+    // MID: udfordrere der søger g og rykker op i g denne runde (er placeret i g i stt).
     const midIds = KAND.filter(a => !goneSet.has(a.id) && a.j.includes(g) && !uæSet.has(a.id) &&
-        (prv ? (prv.place[a.id]===undefined || prv.place[a.id] > g) : true)).map(a=>a.id);
-    const ents = [...uæIds.map(id=>UÆ(id)), ...midIds.map(id=>MID(id))];
-    const free = cps[g] - (uæIds.length + midIds.length);
+        stt.place[a.id]===g && (prv ? (prv.place[a.id]===undefined || prv.place[a.id] > g) : true)).map(a=>a.id);
+    const seats = [...uæIds.map(id=>UÆ(id)), ...midIds.map(id=>MID(id))];
+    const free = cps[g] - seats.length;
+    const ents = [...seats];
     if (free > 0) ents.push(T(free));
+    // Kø som farveløse skygger: alle der venter på g (også standby-folk der
+    // venter på en bedre plads). De er farvede på deres egen plads, skygge her.
+    const seatSet = new Set([...uæIds, ...midIds]);
+    const kø = (stt.queues[g]||[]).filter(id => !goneSet.has(id) && !seatSet.has(id));
+    ents.push(...kø.map(id=>KØ(id, stt.place[id]===undefined)));
     return ents;
   }
   function optEntries(stt, cps, g) {
     const ents = stt.holders[g].map(id => OPT(id));
     const free = cps[g]-stt.holders[g].length; if (free>0) ents.push(T(free));
+    const hold = new Set(stt.holders[g]);
+    // Kø som farveløse skygger: alle der venter på g (også dem med en dårligere plads).
+    const kø = (stt.queues[g]||[]).filter(id => !hold.has(id));
+    ents.push(...kø.map(id=>KØ(id, stt.place[id]===undefined)));
     return ents;
   }
   const slotsFra = fn => ({10:fn(10), 20:fn(20), 60:fn(60), 70:fn(70)});
 
   const slides = [];
-  // Opstart
-  slides.push({ titel:`Opstart — ${u.navn}`, slideType:'tom',
+  // Kapacitet — de tomme pladser præsenteres
+  slides.push({ titel:`Kapacitet — ${u.navn}`, slideType:'tom',
     note:'Alle pladser er ledige. Ansøgerne fordeles via Kvote 1 (snit), Kvote 2 (kvalifikation) og to standby-grupper.',
     legende:['tom'], visOverblik:true,
     udbud:[{ udbudId:uid, kap:{...CAP0}, slots:slotsFra(g => CAP0[g]>0 ? [T(CAP0[g])] : []) }] });
+
+  // Ansøgere — samme "tilbud på alle ønsker"-placering som Runde 1 midlertidig,
+  // men alt som grå ghosts. Ingen ændring i pladserne fra Ansøgere → Midlertidig.
+  const proposal = buildProposal(new Set());
+  slides.push({ titel:`Ansøgere — ${u.navn}`, slideType:'ansøgere', visTerning:true,
+    note:'Her er alle ansøgerne. I den midlertidige placering får hver ansøger tilbud på alle sine ønsker (de bedst rangerede i hver gruppe), så man står flere steder. Oprydningen til én plads sker i clearingen.',
+    legende:['ghost'],
+    udbud:[{ udbudId:uid, kap:{...CAP0}, slots:slotsFra(g => {
+      const ents = proposal.placed[g].map(id => GHOST(id));
+      const free = CAP0[g] - proposal.placed[g].length;
+      if (free > 0) ents.push(T(free));
+      ents.push(...proposal.queued[g].map(id => GHOST(id)));
+      return ents;
+    }) }] });
 
   rounds.forEach((rd,i) => {
     const goneSet = new Set(rd.goneBefore);
     const next = rounds[i+1];
     // Midlertidig
+    const midSlots = (i === 0)
+      // Runde 1: alle får tilbud på alle deres ønsker (samme layout som Ansøgere-siden)
+      ? slotsFra(g => {
+          const ents = proposal.placed[g].map(id => MID(id));
+          const free = CAP0[g] - proposal.placed[g].length;
+          if (free > 0) ents.push(T(free));
+          ents.push(...proposal.queued[g].map(id => KØ(id, !proposal.allPlaced.has(id))));
+          return ents;
+        })
+      : slotsFra(g => midEntries(rd.st, rd.prev, rd.caps, g, goneSet));
     slides.push({ titel:`Runde ${rd.n} · Midlertidig placering — ${u.navn}`, slideType:'midlertidig',
-      note: midNote(rd,i), legende:['uændret','midlertidig'], runde:rd.n, fløjet:rd.goneBefore,
-      udbud:[{ udbudId:uid, kap:{...rd.caps}, slots:slotsFra(g => midEntries(rd.st, rd.prev, rd.caps, g, goneSet)) }] });
+      note: (i === 0 ? 'Hver ansøger får et midlertidigt tilbud på alle sine ønsker — de bedst rangerede i hver gruppe. Derfor står man flere steder. I clearingen ryddes der op, så hver ansøger kun beholder sit højeste opfyldte ønske.' : midNote(rd,i)),
+      legende:['uændret','midlertidig'], runde:rd.n, fløjet:rd.goneBefore,
+      udbud:[{ udbudId:uid, kap:{...rd.caps}, slots: midSlots }] });
     // Clearing (+ migrationer = rykOp)
     const mig = [];
     if (rd.prev) for (const id in rd.st.place) { const pg = rd.prev.place[id]; if (pg!==undefined && rd.st.place[id] < pg) mig.push({id, fra:pg, til:rd.st.place[id]}); }
@@ -2249,14 +2380,19 @@ function generateStaticSlides() {
       note: pfNote, legende:['optaget','tom'], ...extra, udbud:[pfUd] });
   });
 
-  // Resultat
+  // Endelig fordeling: den sidste pladsflyt-side bliver slutsiden (ingen separat resultatside)
   const placedFinal = new Set(Object.keys(finalState.place));
   const afviste = KAND.filter(a => !gone.has(a.id) && !placedFinal.has(a.id)).map(a=>a.id);
   const koePerGrp = {}; for (const g of GRPS) koePerGrp[g] = finalState.queues[g].length;
-  slides.push({ titel:`Endelig fordeling — ${u.navn}`, slideType:'result', visStatus:true,
-    note: resNote(fløjetAlle, afviste), legende:['optaget'], afviste, fløjet:fløjetAlle,
-    udbud:[{ udbudId:uid, kap:{...finalCaps}, gkv:{}, koePerGrp,
-      slots:slotsFra(g => { const e = finalState.holders[g].map(id=>END(id)); const free = finalCaps[g]-finalState.holders[g].length; if (free>0) e.push(T(free)); return e; }) }] });
+  const sidste = slides[slides.length - 1];
+  sidste.titel = `Endelig fordeling — ${u.navn}`;
+  sidste.visStatus = true;
+  sidste.visTerning = true;
+  sidste.slutLås = true;
+  sidste.afviste = afviste;
+  sidste.fløjet = fløjetAlle;
+  sidste.note = resNote(fløjetAlle, afviste);
+  if (sidste.udbud?.[0]) sidste.udbud[0].koePerGrp = koePerGrp;
 
   const tot = slides.length; slides.forEach((s,i)=> s.slideNum = `${i+1}/${tot}`);
   return slides;
