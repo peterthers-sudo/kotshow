@@ -1271,12 +1271,29 @@ function renderSlots(entries, kv, grpNr, uddId, opts={}) {
   const MAX = 14;
   let visible = flat, skjult = 0;
   if (flat.length > MAX) { visible = flat.slice(0, MAX - 1); skjult = flat.length - (MAX - 1); }
+
+  // En "krydset" indehaver rykker op til en bedre gruppe og forlader denne gruppe.
+  // Den skal IKKE optage en grå plads-celle — pladsen frigøres og vises i stedet
+  // bag den næste ansøger der overtager den (fx H), eller som en tom celle hvis
+  // ingen overtager (slide 24). Krydsede vises som "svævende" avatar uden celle.
+  // (Kun relevant på midlertidig-slides, hvor opts.vilRykkeIds er sat.)
+  const erKryds = e => !!(opts.vilRykkeIds && e && !e.tom &&
+                          e.status === 'uændret' && opts.vilRykkeIds.has(e.id));
+
   let out = '';
-  for (let i=0; i<kv; i++) {
-    const e = (i < visible.length) ? visible[i] : null;
-    out += `<div class="kap-celle">${e ? avatarHTML(e, grpNr, uddId, opts) : ''}</div>`;
+  let celler = 0;                       // antal udlagte grå plads-celler (≤ kv)
+  for (const e of visible) {
+    if (erKryds(e)) {
+      out += avatarHTML(e, grpNr, uddId, opts);                 // svæver — ingen celle
+    } else if (celler < kv) {
+      out += `<div class="kap-celle">${avatarHTML(e, grpNr, uddId, opts)}</div>`;
+      celler++;
+    } else {
+      out += avatarHTML(e, grpNr, uddId, opts);                 // kø-skygge / overskud
+    }
   }
-  for (let i=kv; i<visible.length; i++) out += avatarHTML(visible[i], grpNr, uddId, opts);
+  // Frigjorte pladser uden ny ansøger vises som tomme celler.
+  for (; celler < kv; celler++) out += `<div class="kap-celle"></div>`;
   if (skjult > 0) out += `<div class="ko-mere" title="${skjult} flere i kø ud over de viste">+${skjult}</div>`;
   return out;
 }
