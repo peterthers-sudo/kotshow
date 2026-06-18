@@ -140,6 +140,13 @@ body {
   align-items: center;
   gap: 6px;
   padding: 4px 12px;
+  /* Fast højde: linjen skal være lige høj på alle slides, uanset om den
+     ekstra tekst ("Ansøgninger ialt … · Ansøgere i kø …"), GK, lodtrækning
+     eller badges er til stede — ellers flytter rækkerne sig lodret ved
+     sideskift og giver et "hop". nowrap holder alt på én linje. */
+  height: 26px;
+  flex-shrink: 0;
+  white-space: nowrap;
   font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
